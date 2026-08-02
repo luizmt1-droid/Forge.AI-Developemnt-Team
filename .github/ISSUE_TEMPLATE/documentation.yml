@@ -1,0 +1,20 @@
+name: Documentation
+description: Fix or improve the README, CONTRIBUTING or surrounding docs.
+title: "[docs] "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs to change
+      description: A typo, a missing section, a confusing paragraph, a broken link.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: File and section, if you know them.
+      placeholder: "README.md / Installation"
+    validations:
+      required: false

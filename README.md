@@ -107,10 +107,26 @@ pages for a shell script.
 
 ## Language note
 
-The specification is written in Portuguese and the role names are Portuguese
-words (ORÁCULO, BIGORNA, GUARDIÃO). This is intentional: the names are stable
-identifiers used in the chat protocol. The agents themselves respond in whatever
-language you use.
+The surrounding documentation is in English. The specification itself
+(`Forge.Team.MD`) is currently in Portuguese; translating it is the top item on
+the [roadmap](ROADMAP.md). Role names (ORÁCULO, BIGORNA, GUARDIÃO, ...) stay as
+stable protocol identifiers regardless of the language of the body text. The
+agents themselves respond in whatever language you use.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
+opening a pull request, and follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+- **Questions** go to [Discussions](https://github.com/luizmt1-droid/Forge.AI-Developemnt-Team/discussions).
+- **Bugs and enhancements** use the issue templates.
+- **Direction of the project** is sketched in [ROADMAP.md](ROADMAP.md).
+- **Security-sensitive reports** follow [SECURITY.md](SECURITY.md) — do not open
+  a public issue for those.
+
+Every pull request needs an explicit approval from the maintainer before it can
+merge. Direct pushes to `main` are reserved for the maintainer.
 
 ## License
 

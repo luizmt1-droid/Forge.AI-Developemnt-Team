@@ -1,0 +1,15 @@
+# Normalize line endings in the repository to LF regardless of the contributor's
+# operating system. Without this, a Windows contributor can turn a one-line edit
+# to Forge.Team.MD into a 1300-line diff and make review impossible.
+* text=auto
+
+*.md   text eol=lf
+*.MD   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+LICENSE  text eol=lf
+NOTICE   text eol=lf
+CODEOWNERS text eol=lf
+
+# Keep the specification out of GitHub's language statistics; it is prose, not code.
+Forge.Team.MD linguist-documentation

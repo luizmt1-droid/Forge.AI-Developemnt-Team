@@ -1,0 +1,19 @@
+# FORGE writes its own artifacts under forge/ when the team is invoked. If you
+# dogfood FORGE inside this repository, those artifacts are local scratch work
+# and must not be committed to the specification repo.
+forge/
+
+# Operating system noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor and tooling local state
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local environment
+.env
+.env.local

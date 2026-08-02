@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/luizmt1-droid/Forge.AI-Developemnt-Team/discussions/new?category=q-a
+    about: Use Discussions for questions about how FORGE works or how to install it. Issues are for actionable work.
+  - name: Share an idea informally
+    url: https://github.com/luizmt1-droid/Forge.AI-Developemnt-Team/discussions/new?category=ideas
+    about: Brainstorm before opening a formal enhancement issue. The maintainer will promote mature ideas to issues.

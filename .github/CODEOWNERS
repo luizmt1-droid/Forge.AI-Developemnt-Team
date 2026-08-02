@@ -1,5 +1,5 @@
-# Every file in this repository requires review from the owner.
-# Combined with the "Require review from Code Owners" branch rule,
-# no pull request can be merged without an explicit approval here.
-
+# Every file in this repository is owned by the maintainer. Combined with the
+# branch protection rule "Require review from Code Owners", pull requests from
+# contributors cannot merge without an explicit approval here. The maintainer
+# remains exempt from this rule so solo work on main stays unblocked.
 * @luizmt1-droid

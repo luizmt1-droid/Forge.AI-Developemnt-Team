@@ -19,3 +19,4 @@
 - [ ] No existing role was renamed
 - [ ] No agent was given the ability to rewrite another agent's output
 - [ ] I agree to license this contribution under the Apache License 2.0
+- [ ] I have read and follow the Code of Conduct

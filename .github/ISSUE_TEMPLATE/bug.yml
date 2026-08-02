@@ -1,0 +1,53 @@
+name: Bug in the specification
+description: Something in Forge.Team.MD is wrong, contradictory or produces bad agent behavior.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Bugs in a team specification usually show up
+        as contradictory rules, a gate that never fires, or an agent that silently
+        rewrites another agent's output.
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened
+      description: Describe the observed behavior. Quote the section of Forge.Team.MD if you can.
+      placeholder: "When I ran a Level 2 request with UI, the UX Gate was skipped and QA started immediately."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+      description: The behavior the specification claims, or the behavior you believe it should claim.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Adaptive Mode / sizing
+        - Role definition
+        - Quality gate (UX, QA, design critique)
+        - Sync / SSOT
+        - Artifact layout under forge/
+        - Consolidated prompt (section 5)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: section
+    attributes:
+      label: Spec section
+      description: Optional. Section number or heading in Forge.Team.MD.
+      placeholder: "3.0 Excelencia visual e UX"
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The prompt you gave FORGE, the platform (Cursor / Claude Code / Copilot), and anything else needed.
+    validations:
+      required: false

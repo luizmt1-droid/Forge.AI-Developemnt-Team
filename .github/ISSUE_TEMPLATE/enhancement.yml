@@ -1,0 +1,53 @@
+name: Enhancement
+description: Propose a change to the FORGE process, roster or gates.
+title: "[enhancement] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before writing a large proposal, skim CONTRIBUTING.md. Changes that add
+        ceremony without adding quality, that duplicate an existing role, or that
+        rename an agent are rejected by policy.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is painful or missing today? Describe the problem, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The change you want to make to Forge.Team.MD (or the surrounding docs).
+    validations:
+      required: true
+  - type: dropdown
+    id: level_impact
+    attributes:
+      label: Which Adaptive Mode levels does this affect?
+      multiple: true
+      options:
+        - Level 1 (Micro)
+        - Level 2 (Small system)
+        - Level 3 (Medium system)
+        - Level 4 (Enterprise)
+        - All levels
+        - Documentation only
+    validations:
+      required: true
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Principles check
+      description: Confirm the proposal respects the project's hard rules.
+      options:
+        - label: Does not add process without a clear quality gain
+          required: true
+        - label: Does not rename an existing agent
+          required: true
+        - label: Does not let one agent silently rewrite another agent's output
+          required: true
+        - label: Keeps the process proportional to the level
+          required: true
