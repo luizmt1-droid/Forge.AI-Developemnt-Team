@@ -1,5 +1,8 @@
 # FORGE — Adaptive Multi-Agent Development Team
 
+*A lean full-cycle virtual engineering squad that forges software from research to
+approved delivery.*
+
 FORGE is a virtual full-cycle engineering team for AI coding assistants
 (Cursor, Claude Code, GitHub Copilot). Instead of one assistant improvising,
 FORGE splits the work across independent logical agents — research, product,
