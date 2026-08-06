@@ -1,5 +1,5 @@
 name: Documentation
-description: Fix or improve the README, CONTRIBUTING or surrounding docs.
+description: Fix or improve the README, CONTRIBUTING, ROADMAP or surrounding docs (keep them aligned with Forge.Team.MD).
 title: "[docs] "
 labels: ["documentation"]
 body:

@@ -58,14 +58,31 @@ and the word "done".
 
 | Level | Typical request | Process |
 |-------|-----------------|---------|
-| 1 — Micro | Script, bug fix, migration, isolated component | Product → Dev → QA, minimal artifacts (+ short VITRINE/CURADOR cycle if UI) |
-| 2 — Small system | CRUD, dashboard, internal tool, MVP | Light research, light architecture, Design System, **static prototypes + Prototype Gate**, then Dev → UX → QA |
-| 3 — Medium system | Multi-module product | Discovery, Epic→Feature→PBI→Task backlog, **navigable prototypes + Prototype Gate**, full gates |
+| 1 — Micro | Script, bug fix, migration, isolated component | Product → Dev → QA, light Scrum (FACILITADOR + `board.md` + `sprint-N.md`), minimal artifacts (+ short VITRINE/CURADOR cycle if UI) |
+| 2 — Small system | CRUD, dashboard, internal tool, MVP | Light research, light architecture, Design System, **static prototypes + Prototype Gate**, then Dev → UX → QA (FACILITADOR + sprint diary always) |
+| 3 — Medium system | Multi-module product | Discovery, Epic→Feature→PBI→Task backlog, **navigable prototypes + Prototype Gate**, full gates + Scrumban ceremonies |
 | 4 — Enterprise | Financial, ERP, SaaS, distributed, regulated, AI-heavy | Full process, stakeholders, security, data and AI governance, navigable Prototype Gate |
 
 The level is chosen automatically, announced with a one-paragraph rationale, and
 re-evaluated during the project — FORGE escalates when complexity grows and
 de-escalates when it over-engineered.
+
+## How the owner follows a sprint
+
+Open these files in the host project (they are written under `forge/`, never mixed
+with product code):
+
+| File | What you see |
+|------|----------------|
+| `forge/02-especificacao/board.md` | Live Kanban columns (Backlog → Ready → In Progress → **Blocked** → Review → QA → User Validation → Done). One line per card; `@Agente` or `@livre`. |
+| `forge/02-especificacao/sprint-N.md` | Sprint Goal, committed PBIs, Daily/Updates (what each executor did, time spent, impediments), open impediments, progress vs goal. |
+| `forge/08-diretor/` | Executive briefs; DIRETOR also points you back to the sprint diary when you ask for status. |
+
+**How work is assigned:** FACILITADOR distributes tasks in Planning and Daily;
+MOTOR (and other executors) may also pull Ready cards marked `@livre`. Cards do
+not advance without a work-log entry in `sprint-N.md`. Impediments move to
+**Blocked** and FUNDAÇÃO (tech lead) unblocks them unless only you can unlock
+access or scope.
 
 ## The roster
 
@@ -115,6 +132,8 @@ forge/
 
 Under `02-especificacao/`: `board.md` is the column SSOT; `sprint-N.md` is the
 living sprint diary the owner opens for progress (updates, time, impediments).
+Kanban columns include **Blocked** for execution impediments (FUNDAÇÃO unblocks;
+Circuit Breaker after five QA loops is a separate freeze — see the spec).
 Under `02-especificacao/prototipos/`: index + flow map, static screens (Level 2)
 or navigable HTML/CSS (Levels 3–4). Approved prototypes are the visual reference
 for QA comparison — they are never accepted as execution evidence (E3).

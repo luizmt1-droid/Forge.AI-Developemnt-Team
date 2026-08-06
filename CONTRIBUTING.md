@@ -34,13 +34,18 @@ the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 - Changes that add process without adding quality. FORGE exists to run the
   smallest process capable of producing professional work; proposals that make
-  every level heavier will be closed.
+  every level heavier will be closed. Scrumban artifacts that already exist
+  (`board.md`, `sprint-N.md`, hybrid assign/pull, FUNDAÇÃO on Blocked) should be
+  kept lean — do not invent a second progress tracker beside the sprint diary.
 - New roles that duplicate an existing one. The roster is deliberately lean and
   roles absorb adjacent responsibilities at lower levels.
 - Renaming the existing agents. The role names are stable identifiers used by
   the chat protocol and by installed rules in downstream projects.
 - Anything that breaks the rule that no agent may silently rewrite another
   agent's output.
+- Spec changes that leave the README roster, Adaptive Mode table or Artifacts
+  tree out of date. When you edit Scrumban / gates / roster in `Forge.Team.MD`,
+  update the surrounding English docs in the same pull request.
 
 ## Style
 

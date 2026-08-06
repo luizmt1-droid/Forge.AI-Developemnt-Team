@@ -22,8 +22,9 @@ Status legend: **now** / **next** / **later** / **done**.
   (`.cursor/rules/`), Claude Code (`CLAUDE.md`) and GitHub Copilot custom
   instructions, generated from section 5 of the spec so they cannot drift.
 - **Example runs.** Short, anonymized transcripts of Level 1 and Level 2
-  sessions that show Adaptive Mode sizing, the UX Gate and a closed bug loop.
-  These are the fastest way for a newcomer to understand what "done" looks like.
+  sessions that show Adaptive Mode sizing, hybrid assign/pull, a `sprint-N.md`
+  work-log update, the UX Gate and a closed bug loop. These are the fastest way
+  for a newcomer to understand what "done" looks like.
 - **Capability Probe adapters.** Harden the evidence adapters in section 3.6
   (Playwright / desktop / API) with concrete, copy-pasteable snippets that work
   on a fresh machine.
@@ -33,12 +34,18 @@ Status legend: **now** / **next** / **later** / **done**.
 - **Automated sync tooling.** A small CLI or agent skill that materializes the
   roster from `Forge.Team.MD` into the host platform and reports the diff, so
   the SSOT sync routine is not a manual checklist.
-- **Metrics pack.** Default KPI templates under `forge/06-metricas/` that a
-  Level 3+ run can fill without inventing the shape each time. (Sprint diary
-  work logs and textual progress-vs-goal already live in `sprint-N.md` per the
-  spec; this pack is for product KPIs, not the Scrum work log.)
+- **Metrics pack.** Default product KPI templates under `forge/06-metricas/`
+  that a Level 3+ run can fill without inventing the shape each time (not a
+  replacement for the Scrum work log in `sprint-N.md`).
 - **Translations of the surrounding docs.** Once the specification is in
   English, community translations of the README into other languages are welcome.
+
+## Done
+
+- **Scrumban like a real team (spec + README).** FACILITADOR at every Adaptive
+  Mode level; hybrid assign + pull; `board.md` + `sprint-N.md` work logs (done /
+  time / impediment); **Blocked** column with FUNDAÇÃO as tech-lead unblocker;
+  DIRETOR briefs point the owner at the sprint diary.
 
 ## Out of scope (for now)
 
