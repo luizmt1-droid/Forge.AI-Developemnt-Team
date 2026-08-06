@@ -39,20 +39,29 @@ and the word "done".
   not edit CSS — it files defects, and the front-end agent fixes them.
 - **Gates, not vibes.** Functional QA boots the real system and runs every
   Gherkin scenario, filing bugs on the board for each failure. Anything with a
-  UI must also clear a design-critique loop and a blocking UX gate before QA
-  even starts.
+  UI at Level 2+ must clear a **Prototype Gate** (VITRINE designs; CURADOR
+  critiques beauty, layout philosophy and flows until Pass) **before** front-end
+  implementation starts; the implemented UI then clears a design-critique loop
+  and a blocking UX gate before QA. Screenshots from the running app are stored
+  under `forge/05-qa/evidencias/` and compared against the revalidated
+  prototypes.
 - **Runs to completion.** Once invoked, the team loops on bugs and critiques
   until QA signs off, with output throttling for long sprints and a circuit
   breaker that stops runaway loops.
+- **Scrum like a real team.** The FACILITADOR (scrum master) runs at every
+  Adaptive Mode level: distributes tasks and keeps WIP honest; executors also
+  pull free Ready cards. Progress lives in `forge/02-especificacao/sprint-N.md`
+  (what was done, time spent, impediments) plus `board.md`. Blocked work goes to
+  FUNDAÇÃO (tech lead) to unblock — not only to chat status.
 
 ## Adaptive Mode levels
 
 | Level | Typical request | Process |
 |-------|-----------------|---------|
-| 1 — Micro | Script, bug fix, migration, isolated component | Product → Dev → QA, minimal artifacts |
-| 2 — Small system | CRUD, dashboard, internal tool, MVP | Light research, light architecture, mandatory design system if there is UI |
-| 3 — Medium system | Multi-module product | Discovery, Epic→Feature→PBI→Task backlog, full gates |
-| 4 — Enterprise | Financial, ERP, SaaS, distributed, regulated, AI-heavy | Full process, stakeholders, security, data and AI governance |
+| 1 — Micro | Script, bug fix, migration, isolated component | Product → Dev → QA, minimal artifacts (+ short VITRINE/CURADOR cycle if UI) |
+| 2 — Small system | CRUD, dashboard, internal tool, MVP | Light research, light architecture, Design System, **static prototypes + Prototype Gate**, then Dev → UX → QA |
+| 3 — Medium system | Multi-module product | Discovery, Epic→Feature→PBI→Task backlog, **navigable prototypes + Prototype Gate**, full gates |
+| 4 — Enterprise | Financial, ERP, SaaS, distributed, regulated, AI-heavy | Full process, stakeholders, security, data and AI governance, navigable Prototype Gate |
 
 The level is chosen automatically, announced with a one-paragraph rationale, and
 re-evaluated during the project — FORGE escalates when complexity grows and
@@ -66,10 +75,10 @@ Only the roles a level requires are activated.
 |-------|--------|
 | Governance | **DIRETOR** (program director, reports to the human owner) |
 | Research | **ORÁCULO** (domain, market and visual benchmark) |
-| Product & flow | **BÚSSOLA** (product owner), **FACILITADOR** (scrum master) |
-| Architecture | **FUNDAÇÃO** (tech lead), with optional **CÂNONE** / **PRAGMA** lenses |
+| Product & flow | **BÚSSOLA** (product owner), **FACILITADOR** (scrum master — all levels: assign + pull, board, sprint diary) |
+| Architecture | **FUNDAÇÃO** (tech lead + impediment unblock), with optional **CÂNONE** / **PRAGMA** lenses |
 | Dev bench | **BIGORNA** (front-end), **MALHO** (back-end), **ENGRENAGEM** (integration), **CALDEIRA** (platform & DX), **TORNO** (complexity & performance) |
-| Design | **VITRINE** (UX/UI), **CURADOR** (art director / critic) |
+| Design | **VITRINE** (UX/UI + prototypes), **CURADOR** (art director / critic — Prototype Gate + UX Gate) |
 | Quality | **GUARDIÃO** (QA lead), **CINZEL** (simplicity guardian), **ARGUS** (multi-area critic) |
 | Data & AI | **COFRE** (DBA), **LUPA** (analytics), **ALQUIMISTA** (ML/RAG), **SUSSURRADOR** (prompts & agents), **SENTINELA** (AI evaluation & governance) |
 
@@ -93,15 +102,22 @@ FORGE writes its own artifacts under `forge/`, never mixed with product code:
 forge/
   00-intake/         inferred assumptions, sizing, sync report
   01-pesquisa/       domain dossier, visual benchmark
-  02-especificacao/  backlog, board, design system, Gherkin
+  02-especificacao/  backlog, board, sprint diary (sprint-N.md), design system,
+                       prototypes, Gherkin
   03-arquitetura/    ADRs, data modeling
   04-ia/             AI core
-  05-qa/             QA reports, design curation, screenshots, bugs
+  05-qa/             QA reports, prototype curation, design curation,
+                     screenshots (evidencias/), bugs
   06-metricas/       KPIs
   07-retrospectivas/ retrospectives
   08-diretor/        executive briefs
 ```
 
+Under `02-especificacao/`: `board.md` is the column SSOT; `sprint-N.md` is the
+living sprint diary the owner opens for progress (updates, time, impediments).
+Under `02-especificacao/prototipos/`: index + flow map, static screens (Level 2)
+or navigable HTML/CSS (Levels 3–4). Approved prototypes are the visual reference
+for QA comparison — they are never accepted as execution evidence (E3).
 Every artifact is proportional to the level — FORGE will not generate dozens of
 pages for a shell script.
 

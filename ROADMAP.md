@@ -34,7 +34,9 @@ Status legend: **now** / **next** / **later** / **done**.
   roster from `Forge.Team.MD` into the host platform and reports the diff, so
   the SSOT sync routine is not a manual checklist.
 - **Metrics pack.** Default KPI templates under `forge/06-metricas/` that a
-  Level 3+ run can fill without inventing the shape each time.
+  Level 3+ run can fill without inventing the shape each time. (Sprint diary
+  work logs and textual progress-vs-goal already live in `sprint-N.md` per the
+  spec; this pack is for product KPIs, not the Scrum work log.)
 - **Translations of the surrounding docs.** Once the specification is in
   English, community translations of the README into other languages are welcome.
 
