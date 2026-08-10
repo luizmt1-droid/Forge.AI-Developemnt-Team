@@ -6,9 +6,9 @@ approved delivery.*
 FORGE is a virtual full-cycle engineering team for AI coding assistants
 (Cursor, Claude Code, GitHub Copilot). Instead of one assistant improvising,
 FORGE splits the work across independent logical agents — research, product,
-architecture, five full-stack dev benches, UX/UI, design critique, QA, data,
-security and analytics — and materializes them as real subagents, Tasks or MCP
-tools whenever the platform supports it.
+architecture, five full-stack dev benches, UX/UI, design critique, evidence-based
+QA, data, security and analytics — and materializes them as real subagents,
+Tasks or MCP tools whenever the platform supports it.
 
 The whole team is defined by a single specification file: [`Forge.Team.MD`](Forge.Team.MD).
 
@@ -29,60 +29,69 @@ and the word "done".
   instead of a manual reinstall.
 - **Adaptive Mode.** Every request is classified from Level 1 (a script or a bug
   fix) to Level 4 (a regulated, distributed enterprise system), and FORGE runs
-  the smallest process that still produces professional work. More ceremony is
-  not more quality.
-- **Assume more, ask less.** Requirements are inferred and explicitly labeled as
-  assumptions; the human is only asked when a decision materially changes
+  the smallest process that still produces professional work.
+- **Assume more, ask less.** Requirements are inferred and labeled as
+  assumptions; the human (DONO) is only asked when a decision materially changes
   architecture, business, regulatory risk or cost.
+- **Backlog autonomy (anti–prompt-tax).** After a master task, BÚSSOLA generates
+  the full board and FACILITADOR pulls P0 until QA approval — the owner should
+  not have to name role + metric. Owner work requests become Kanban cards in the
+  same turn (`priority` 0|1|2, default 0). Meta-commands (`status`, `termine`,
+  `encerre`, `melhoria contínua`, `desinstale`) do not create cards.
 - **Role integrity.** No agent rewrites another agent's output. Changes flow
-  through review, critique, bug tickets or PR comments. The design critic does
-  not edit CSS — it files defects, and the front-end agent fixes them.
-- **Gates, not vibes.** Functional QA boots the real system and runs every
-  Gherkin scenario, filing bugs on the board for each failure. Anything with a
-  UI at Level 2+ must clear a **Prototype Gate** (VITRINE designs; CURADOR
-  critiques beauty, layout philosophy and flows until Pass) **before** front-end
-  implementation starts; the implemented UI then clears a design-critique loop
-  and a blocking UX gate before QA. Screenshots from the running app are stored
-  under `forge/05-qa/evidencias/` and compared against the revalidated
-  prototypes.
-- **Runs to completion.** Once invoked, the team loops on bugs and critiques
-  until QA signs off, with output throttling for long sprints and a circuit
-  breaker that stops runaway loops.
-- **Scrum like a real team.** The FACILITADOR (scrum master) runs at every
-  Adaptive Mode level: distributes tasks and keeps WIP honest; executors also
-  pull free Ready cards. Progress lives in `forge/02-especificacao/sprint-N.md`
-  (what was done, time spent, impediments) plus `board.md`. Blocked work goes to
-  FUNDAÇÃO (tech lead) to unblock — not only to chat status.
+  through review, critique, bug tickets or PR comments.
+- **Gates, not vibes.** Evidence-based QA exercises the real system, captures
+  proof, and has someone who did not produce the work review it. UI at Level 2+
+  clears Prototype / UX / Visual Excellence gates. Interactive products clear a
+  Playable Gate. UI that consumes APIs also clears a **Connected Runtime Gate**
+  (authenticated run against the real stack — mocks alone never close Done).
+- **Mission Control.** The owner follows work in chat (Chat Surface) and on a
+  local Live Kanban site projected from `board.md` — not only from assistant
+  narration.
+- **Controlled continuous improvement.** Default mode is `NORMAL`. Explicit
+  `FORGE, melhoria contínua` turns on `CONTINUOUS` (team exercises the system,
+  captures screenshots, lists bugs/improvements). `FORGE, termine` drains active
+  work; `FORGE, encerre` hard-stops.
+- **Clean uninstall.** `FORGE, desinstale` removes FORGE artifacts, Cursor
+  rules/hooks and `btg-*` MCP keys from the requested scope — never product code.
 
 ## Adaptive Mode levels
 
 | Level | Typical request | Process |
 |-------|-----------------|---------|
-| 1 — Micro | Script, bug fix, migration, isolated component | Product → Dev → QA, light Scrum (FACILITADOR + `board.md` + `sprint-N.md`), minimal artifacts (+ short VITRINE/CURADOR cycle if UI) |
-| 2 — Small system | CRUD, dashboard, internal tool, MVP | Light research, light architecture, Design System, **static prototypes + Prototype Gate**, then Dev → UX → QA (FACILITADOR + sprint diary always) |
-| 3 — Medium system | Multi-module product | Discovery, Epic→Feature→PBI→Task backlog, **navigable prototypes + Prototype Gate**, full gates + Scrumban ceremonies |
-| 4 — Enterprise | Financial, ERP, SaaS, distributed, regulated, AI-heavy | Full process, stakeholders, security, data and AI governance, navigable Prototype Gate |
+| 1 — Micro | Script, bug fix, migration, isolated component | Product → Dev → QA, light Scrumban (`board.md`), minimal artifacts (+ short VITRINE/CURADOR cycle if UI) |
+| 2 — Small system | CRUD, dashboard, internal tool, MVP | Light research, Asset Gate when needed, architecture, Design System, **prototypes + Prototype Gate**, Dev → gate columns → UX → QA; Mission Control |
+| 3 — Medium system | Multi-module product | Discovery, Epic→Feature→PBI→Task backlog, full gates + Scrumban ceremonies + separate QA squad roles |
+| 4 — Enterprise | Financial, ERP, SaaS, distributed, regulated, AI-heavy | Full process, stakeholders, security, data and AI governance |
 
 The level is chosen automatically, announced with a one-paragraph rationale, and
-re-evaluated during the project — FORGE escalates when complexity grows and
-de-escalates when it over-engineered.
+re-evaluated during the project.
 
 ## How the owner follows a sprint
 
-Open these files in the host project (they are written under `forge/`, never mixed
-with product code):
+| Surface | What you see |
+|---------|----------------|
+| `forge/02-especificacao/board.md` | Kanban SSOT — columns: Backlog → Ready → In Progress → Review → **Ready for QA** → QA → User Validation → Done |
+| Live Kanban (`FORGE, abra o kanban`) | Browser board ≤2s behind the projection (`forge/09-mission-control/`) |
+| Chat / `FORGE, status` | Chat Surface: executive summary + P0 in flight + mode |
+| `forge/08-diretor/` | Briefs + `status-projection.json` |
+| `forge/06-loop/loop-state.md` | Mode: `NORMAL` \| `CONTINUOUS` \| `DRAINING` \| `BLOCKED_CB` \| `STOPPED` |
 
-| File | What you see |
-|------|----------------|
-| `forge/02-especificacao/board.md` | Live Kanban columns (Backlog → Ready → In Progress → **Blocked** → Review → QA → User Validation → Done). One line per card; `@Agente` or `@livre`. |
-| `forge/02-especificacao/sprint-N.md` | Sprint Goal, committed PBIs, Daily/Updates (what each executor did, time spent, impediments), open impediments, progress vs goal. |
-| `forge/08-diretor/` | Executive briefs; DIRETOR also points you back to the sprint diary when you ask for status. |
+**Flow (Level 2+):** one adjacent column advance per card per publish (REGRA DE
+OURO). Dev closes only `In Progress → Review` in the same turn; gates advance
+with evidence. Skipping Review / Ready for QA / QA is process failure (prompt tax).
 
-**How work is assigned:** FACILITADOR distributes tasks in Planning and Daily;
-MOTOR (and other executors) may also pull Ready cards marked `@livre`. Cards do
-not advance without a work-log entry in `sprint-N.md`. Impediments move to
-**Blocked** and FUNDAÇÃO (tech lead) unblocks them unless only you can unlock
-access or scope.
+## Useful commands
+
+| Command | Effect |
+|---------|--------|
+| `FORGE, …` | Invoke the team on a task |
+| `FORGE, status` / `como está?` | Refresh Chat Surface + brief |
+| `FORGE, abra o kanban` / `feche o kanban` | Start/stop Live Kanban site |
+| `FORGE, melhoria contínua` | Enter `CONTINUOUS` |
+| `FORGE, termine` / `termine aí` | Enter `DRAINING` (finish active queue only) |
+| `FORGE, encerre` | Hard stop |
+| `FORGE, desinstale` | Uninstall FORGE from project/Cursor (§0.05) |
 
 ## The roster
 
@@ -90,23 +99,32 @@ Only the roles a level requires are activated.
 
 | Group | Agents |
 |-------|--------|
-| Governance | **DIRETOR** (program director, reports to the human owner) |
-| Research | **ORÁCULO** (domain, market and visual benchmark) |
-| Product & flow | **BÚSSOLA** (product owner), **FACILITADOR** (scrum master — all levels: assign + pull, board, sprint diary) |
-| Architecture | **FUNDAÇÃO** (tech lead + impediment unblock), with optional **CÂNONE** / **PRAGMA** lenses |
-| Dev bench | **BIGORNA** (front-end), **MALHO** (back-end), **ENGRENAGEM** (integration), **CALDEIRA** (platform & DX), **TORNO** (complexity & performance) |
-| Design | **VITRINE** (UX/UI + prototypes), **CURADOR** (art director / critic — Prototype Gate + UX Gate) |
-| Quality | **GUARDIÃO** (QA lead), **CINZEL** (simplicity guardian), **ARGUS** (multi-area critic) |
+| Governance | **DIRETOR** (program director → DONO; Sync, sizing, Mission Control chat, uninstall) |
+| Research | **ORÁCULO** (domain, benchmark, category fluency, asset hunt); **VIGIA** (continuous-improvement sentinel — `CONTINUOUS` only; ≠ SENTINELA) |
+| Product & flow | **BÚSSOLA** (PO — autonomous board, DONO-request cards, intake dedup); **FACILITADOR** (scrum master — pull P0, gate columns, loop-state, Mission Control publish) |
+| Architecture | **FUNDAÇÃO** (tech lead, domain invariants, asset wiring), optional **CÂNONE** / **PRAGMA** lenses |
+| Dev bench | **BIGORNA** (front-end), **MALHO** (back-end), **ENGRENAGEM** (integration), **CALDEIRA** (platform, probes, smoke pack, ship, Live Kanban, autopilot hook), **TORNO** (complexity & performance) |
+| Design | **VITRINE** (UX/UI + prototypes), **CURADOR** (art director / critic) |
+| Quality | **GUARDIÃO** (QA lead), **ÍRIS** (automation & capture), **PERITO** (blind evidence review), **CINZEL** (simplicity), **ARGUS** (multi-area critic) |
 | Data & AI | **COFRE** (DBA), **LUPA** (analytics), **ALQUIMISTA** (ML/RAG), **SUSSURRADOR** (prompts & agents), **SENTINELA** (AI evaluation & governance) |
 
 ## Installation
 
-1. Copy `Forge.Team.MD` into your project (for Cursor, `.cursor/forge/Forge.Team.MD` works well).
-2. Register the consolidated prompt from section 5 of the spec as a system rule:
-   - **Cursor** — a file under `.cursor/rules/`
-   - **Claude Code** — `CLAUDE.md`
-   - **GitHub Copilot** — custom instructions
-3. Start a message with `FORGE,` followed by your task.
+Fastest path: copy from [`packs/`](packs/) (generated from section 5):
+
+| Pack | Drop into |
+|------|-----------|
+| [`packs/cursor/`](packs/cursor/) | `.cursor/forge/`, `.cursor/rules/`, `.cursor/agents/`, `.cursor/hooks/` (+ merge `hooks.json`) |
+| [`packs/claude/`](packs/claude/) | `CLAUDE.md` |
+| [`packs/copilot/`](packs/copilot/) | Copilot custom instructions / `.github/copilot-instructions.md` |
+
+Or manually:
+
+1. Copy `Forge.Team.MD` into your project (for Cursor, `.cursor/forge/Forge.Team.MD`).
+2. Register the consolidated prompt from **section 5** of the spec as a system rule.
+3. Optional for continuous improvement: Cursor `stop` hook
+   `.cursor/hooks/forge-autopilot-stop.mjs` + BTG MCP Dev Suite (`btg-*`) — see §0.03.
+4. Start a message with `FORGE,` followed by your task.
 
 On the first invocation FORGE runs its sync routine, reports what it created or
 updated, sizes the request, and starts working.
@@ -117,26 +135,19 @@ FORGE writes its own artifacts under `forge/`, never mixed with product code:
 
 ```text
 forge/
-  00-intake/         inferred assumptions, sizing, sync report
-  01-pesquisa/       domain dossier, visual benchmark
-  02-especificacao/  backlog, board, sprint diary (sprint-N.md), design system,
-                       prototypes, Gherkin
-  03-arquitetura/    ADRs, data modeling
+  00-intake/         hypotheses, sizing, sync-report, prompt-tax
+  01-pesquisa/       dossier, visual benchmark, category-fluency, asset-board
+  02-especificacao/  board.md, design system, prototypes, Gherkin, mission-control-spec
+  03-arquitetura/    ADRs, domain-invariants, data modeling
   04-ia/             AI core
-  05-qa/             QA reports, prototype curation, design curation,
-                     screenshots (evidencias/), bugs
+  05-qa/             capabilities, evidencias/<run-id>/, laudos, baseline, session-smoke
+  06-loop/           loop-state, intake-queue, discovery-log, cycle-log, debt-register
   06-metricas/       KPIs
   07-retrospectivas/ retrospectives
-  08-diretor/        executive briefs
+  08-diretor/        briefs, status-brief, status-projection, publish-projection.js
+  09-mission-control/ Live Kanban site (server + public/index.html)
 ```
 
-Under `02-especificacao/`: `board.md` is the column SSOT; `sprint-N.md` is the
-living sprint diary the owner opens for progress (updates, time, impediments).
-Kanban columns include **Blocked** for execution impediments (FUNDAÇÃO unblocks;
-Circuit Breaker after five QA loops is a separate freeze — see the spec).
-Under `02-especificacao/prototipos/`: index + flow map, static screens (Level 2)
-or navigable HTML/CSS (Levels 3–4). Approved prototypes are the visual reference
-for QA comparison — they are never accepted as execution evidence (E3).
 Every artifact is proportional to the level — FORGE will not generate dozens of
 pages for a shell script.
 

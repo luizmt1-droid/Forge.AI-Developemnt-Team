@@ -68,6 +68,28 @@ Se o DONO escrever um prompt no estilo `FORGE, MALHO: … ≥35 …` / `FORGE, C
 - Em Retro (Nível 3–4): contar eventos de prompt tax e o que faltou no board autônomo.
 - Todo Circuit Breaker / Bug P0 do DONO vira **smoke permanente** no Session Smoke Pack (§3.8) — não só patch pontual.
 
+### Pedido do DONO → Kanban (fail-closed)
+
+> **Por quê:** o DONO pede no chat porque quer **celeridade**. Se o pedido não vira card, some do Mission Control e o pull autônomo não o enxerga. Meta-comandos de controle do time **não** são trabalho de entrega.
+
+**Escopo — vira card:** qualquer pedido de **trabalho** sob evocação FORGE (feature, bug, melhoria, ajuste, spike, mudança de escopo, “faz X”, “corrige Y”, prompt-tax absorvido).
+
+**Escopo — não vira card (meta-comandos):** `FORGE, status` / `como está?`, `abra o kanban` / `feche o kanban`, `termine` / `termine aí`, `encerre`, `melhoria contínua` (e aliases §0.03), `desinstale` / `uninstall`. Fora de evocação FORGE: assistente normal — sem board.
+
+Regras:
+
+1. Todo pedido de trabalho do DONO sob FORGE **entra no Kanban na mesma resposta** (PBI / Bug / Spike conforme o caso), com ID, descrição e prioridade.
+2. **Escala de prioridade do DONO** (campo do card, **distinto** de severidade de Bug):
+   - `0` — imediato / celeridade (reordena o pull; puxa agora se houver capacidade de WIP, senão próximo elegível após liberar slot)
+   - `1` — alta nesta sprint (Ready cedo; compete com outros `1`)
+   - `2` — normal / backlog (entra em Backlog; BÚSSOLA agenda)
+3. **Default:** se o DONO não disser a prioridade, FORGE **assume `0`** (pedido costuma querer celeridade), marca no card `priority: 0 (inferido)` e **pode perguntar** numa linha curta: “Prioridade 0, 1 ou 2?” — **sem bloquear** a criação do card nem o início do trabalho quando for `0`.
+4. Se o DONO responder `0` / `1` / `2`, BÚSSOLA **reajusta** ranking e coluna (Ready vs Backlog) na hora; FACILITADOR republica Mission Control.
+5. BÚSSOLA continua dona do ranking global: prioridade do DONO é sinal forte; Circuit Breaker / Bug Blocker–Critical / Playable Fail ainda podem forçar P0 operacional. Conflito → DIRETOR reporta no resumo e pergunta só se mudar negócio/risco.
+6. Em `CONTINUOUS`: pedido **explícito** do DONO **não fica preso só no intake** — cria/promove card no `board.md` na mesma resposta (dedup se for duplicata). Achados da VIGIA seguem o pipeline intake → dedup (§3.3.1).
+7. Em `DRAINING`: pedido novo → card no board com prioridade registrada, **mas não puxa** até sair de drenagem (exceto Bug Blocker/Critical da fila ativa — regra §0.03).
+8. Tag: `[BÚSSOLA — pedido DONO]` ao criar/repriorizar; resumo do DIRETOR cita **ID + prioridade**.
+
 ---
 
 ## 0.03 Melhoria contínua controlada (modos de operação)
@@ -136,7 +158,7 @@ FACILITADOR é o **dono do estado do loop**; DIRETOR anuncia mudanças com tags.
 
 ### Ritual de ativação (`CONTINUOUS`)
 
-1. DIRETOR: `[FACILITADOR — melhoria contínua]` + anúncio do modo; grava `mode: CONTINUOUS` em `loop-state.md`.
+1. DIRETOR: `[FACILITADOR — melhoria contínua]` + anúncio do modo; FACILITADOR grava em `loop-state.md`: `mode: CONTINUOUS`, `autopilot: on` e `updated:` fresco (arma o **autopilot hook** — heartbeat primário, §0.03 *Persistência*). Confirmar que `.cursor/hooks.json` tem o `stop` hook `forge-autopilot-stop.mjs` (CALDEIRA cria se ausente) e lembrar o DONO de aprovar hooks em Cursor → Settings → Hooks se ainda não ativos.
 2. **Continuous Improvement Probe** (§0.01 step 8): se a BTG MCP Dev Suite não estiver `ready`, CALDEIRA instala/valida (§0.03 — *MCP Dev Suite*) antes de seguir.
 3. Com suite saudável: `btg-loop-supervisor-mcp.agents_status` → se `active=false`, `activate_agents` (`reason` = melhoria contínua). Prefixo de sessão: *Rodando meus agentes*.
 4. **Primeiro ciclo de auto-avaliação (§0.03 — Loop de auto-avaliação):** ÍRIS/CALDEIRA exercitam o sistema e capturam fotos/screenshots; GUARDIÃO + CURADOR avaliam visual + funcional; VIGIA + GUARDIÃO geram a lista de bugs/melhorias → intake. Em paralelo: VIGIA agenda varreduras seguintes; GUARDIÃO/ÍRIS ligam cadência de spot QA (§3.6.13); QA duro via `btg-qa-mcp` quando o card for código.
@@ -145,7 +167,7 @@ FACILITADOR é o **dono do estado do loop**; DIRETOR anuncia mudanças com tags.
 
 ### Ritual de drenagem (`DRAINING`)
 
-1. Snapshot da fila ativa → `loop-state.md` (IDs + colunas).
+1. Snapshot da fila ativa → `loop-state.md` (IDs + colunas); manter `autopilot: on` até a fila ativa esvaziar (o hook segue drenando em `DRAINING`); ao close, gravar `mode: STOPPED` + `autopilot: off`.
 2. VIGIA: `discovery=paused`; intake-queue congela (candidatos não promovidos).
 3. FACILITADOR: pull só da fila ativa; tag `[DIRETOR — drenagem]` com contagem restante.
 4. Close de drenagem quando: fila ativa = 0, Blocker/Critical da drenagem = 0, Session Smoke Pack verde no último ciclo (N2+), ship se houver runtime (§2).
@@ -175,47 +197,68 @@ No catálogo Cursor os IDs aparecem com prefixo `user-` (ex.: `user-btg-loop-sup
 |-----|-------------|------|
 | Node.js ≥ 20 | `node -v` | Instalar LTS ≥ 20 se ausente (**ok do DONO** se for install global do runtime) |
 | npm (workspaces) | `npm -v` | Vem com Node |
-| Repo `MCP-Agents` | pasta com `package.json` (`name`: `btg-mcp-dev-suite`) | Clonar/obter ao lado do produto (default sibling: `../MCP-Agents` relativo ao repo do produto) |
-| Cursor MCP config | `~/.cursor/mcp.json` e/ou `<repo>/.cursor/mcp.json` | Criado/atualizado pelo installer (não apaga outros servers) |
+| Repo `MCP-Agents` | pasta com `package.json` (`name`: `btg-mcp-dev-suite`) e `scripts/install-mcps.mjs` | Ver **descoberta de path** abaixo — **nunca** assumir OneDrive BTG sem `Test-Path` |
+| Cursor MCP config | `%USERPROFILE%\.cursor\mcp.json` e/ou `<repo>/.cursor/mcp.json` | Installer **faz merge** das 6 chaves `btg-*` (não apaga outros servers). `mcpServers: {}` vazio = suite **não** instalada |
+
+#### Descoberta de path (CALDEIRA — ordem fixa, fail-closed)
+
+Antes de qualquer `npm install` / claim de suite ready, resolver `MCP_AGENTS_ROOT` assim (primeiro hit com `package.json` name `btg-mcp-dev-suite` vence):
+
+1. Env `FORGE_MCP_AGENTS_ROOT` ou `MCP_AGENTS_ROOT` (se setada e existir)
+2. Sibling do produto: `<repo>/../MCP-Agents`
+3. Sibling sob `D:\Proj\MCP-Agents` / `%USERPROFILE%\proj\MCP-Agents` (quando aplicável)
+4. Legacy BTG (só se existir no disco): `%USERPROFILE%\OneDrive - Banco BTG Pactual S.A\Luiz\proj\MCP-Agents`
+5. Busca rasa opcional (depth ≤ 3) sob `%USERPROFILE%` / `D:\Proj` por pasta `MCP-Agents` — **sem** inventar path
+
+Se **nenhum** path existir: Continuous Improvement Probe = **Fail** (turn-bound). Registrar em `sync-report.md`. **Proibido** fingir `activate_agents`. Continuação via autopilot hook permanece válida. Pedir ao DONO o path ou o clone do `btg-mcp-dev-suite` (não clonar repo alheio sem URL/autorização explícita).
 
 #### Ritual de instalação (CALDEIRA — Windows: **cmd.exe**)
 
-Path default do suite no ambiente BTG (ajustar se o clone estiver noutro lugar):
-
-`%USERPROFILE%\OneDrive - Banco BTG Pactual S.A\Luiz\proj\MCP-Agents`
+Substituir `<MCP_AGENTS_ROOT>` pelo path descoberto. **Não** hardcodar OneDrive se o Test-Path falhou.
 
 ```bat
-cd /d "%USERPROFILE%\OneDrive - Banco BTG Pactual S.A\Luiz\proj\MCP-Agents"
+cd /d "<MCP_AGENTS_ROOT>"
 npm install --no-audit --no-fund
 npm run build
-npm run install-mcps -- --global
-npm run validate
 ```
 
-Equivalente one-shot (mesmo script Node; wrappers `install-mcps.ps1` / `install-mcps.sh` só delegam):
+**Escrita do `mcp.json` (escolher uma; preferência FORGE):**
 
-```bat
-cd /d "<path>\MCP-Agents"
-npm run install-mcps -- --global
-```
+| Cenário | Comando | Destino |
+|---------|---------|---------|
+| Workspace deste produto (recomendado se global está `{}` ou multi-projeto) | `npm run install-mcps -- --config "<PRODUTO>\.cursor\mcp.json"` | `<repo>/.cursor/mcp.json` com paths **absolutos** para `dist\index.js` |
+| Todas as workspaces do DONO | `npm run install-mcps -- --global` | `%USERPROFILE%\.cursor\mcp.json` |
+| Só dentro do clone MCP-Agents | `npm run install-mcps` (sem flag) | `<MCP-Agents>/.cursor/mcp.json` paths relativos — **insuficiente** sozinho para o produto |
 
 Flags do installer (`scripts/install-mcps.mjs`):
 
 | Flag | Efeito |
 |------|--------|
 | *(sem flag)* | Escreve `<MCP-Agents>/.cursor/mcp.json` com paths relativos (`node` + `./mcp/<name>/dist/index.js`) |
-| `--global` | Escreve `%USERPROFILE%\.cursor\mcp.json` com paths absolutos (`process.execPath` + `...\mcp\<name>\dist\index.js`) — **recomendado** para FORGE em qualquer workspace |
-| `--config <path>` | Sobrescreve o arquivo-alvo |
+| `--global` | Escreve `%USERPROFILE%\.cursor\mcp.json` com paths absolutos (`process.execPath` + `...\mcp\<name>\dist\index.js`) |
+| `--config <path>` | Merge/atualiza **somente** as 6 chaves `btg-*` no arquivo-alvo (criar arquivo se ausente; preservar demais `mcpServers`) — **use isto** para `<produto>/.cursor/mcp.json` |
 | `--skip-install` / `--skip-build` / `--skip-probe` | Pula o passo correspondente |
+
+Exemplo Copavibes (produto em `D:\Proj\CopacabanaVibesStudios`, suite em sibling):
+
+```bat
+cd /d "D:\Proj\MCP-Agents"
+npm install --no-audit --no-fund
+npm run build
+npm run install-mcps -- --config "D:\Proj\CopacabanaVibesStudios\.cursor\mcp.json"
+npm run validate
+```
 
 O installer **nunca** remove outras entradas de `mcpServers` — só cria/atualiza as seis chaves `btg-*`.
 
-Após instalar: **Reload Window** do Cursor (ou reiniciar) para o host carregar os servers. Probe Pass = os 6 com `serverStatus: ready` (ou `OK` no `npm run probe`).
+Após instalar: **Reload Window** do Cursor (ou reiniciar) para o host carregar os servers. Probe Pass = os 6 com `serverStatus: ready` (ou `OK` no `npm run probe` / `npm run validate`).
+
+**Env no produto (opcional mas recomendado):** `BTG_MCP_PROJECT_ROOT=<raiz do produto>` para tools de FS/QA não saírem do repo.
 
 #### Validação (obrigatória no Continuous Improvement Probe)
 
 ```bat
-cd /d "<path>\MCP-Agents"
+cd /d "<MCP_AGENTS_ROOT>"
 npm run validate
 ```
 
@@ -232,11 +275,11 @@ btg-judge-mcp                  OK       4
 btg-loop-supervisor-mcp        OK       5
 ```
 
-No Sync (`sync-report.md`): listar os 6 MCPs + path do `mcp.json` + resultado do probe. Se algum estiver `error` / `needsAuth` → chamar `mcp_auth` do server; se persistir, **Fail** do Continuous Improvement Probe (loop fica turn-bound; proibido claim 24/7).
+No Sync (`sync-report.md`): listar os 6 MCPs + path do `mcp.json` usado + `MCP_AGENTS_ROOT` + resultado do probe. Se repo ausente → Fail explícito + plano B turn-bound. Se algum server `error` / `needsAuth` → `mcp_auth`; se persistir, Fail do probe (proibido claim 24/7).
 
 #### Uso em `CONTINUOUS` (após suite ready)
 
-1. `agents_status` → `activate_agents` ao entrar em `CONTINUOUS`.
+1. `agents_status` → `activate_agents` ao entrar em `CONTINUOUS` (`reason` = melhoria contínua).
 2. Por card de código: `start_task` → obedecer `run_iteration` / `generate_next_action` (Developer → `run_quality_gate` → `review_code` → `judge_review` → `check_done_criteria` → `finish_task`).
 3. Registrar cada ciclo com `register_iteration`; respeitar `check_loop_limit` (default 10) e Circuit Breaker FORGE (§3).
 4. Done duro do supervisor: QA green + review/judge approved + `score ≥ 9` + `coverage ≥ 85` (defaults) — alinhado ao gate GUARDIÃO, não o substitui em evidência UI (§3.6).
@@ -246,8 +289,10 @@ No Sync (`sync-report.md`): listar os 6 MCPs + path do `mcp.json` + resultado do
 
 | Sintoma | Ação |
 |---------|------|
-| Cursor não lista os `btg-*` | Rodar installer com `--global`; Reload Window; conferir `%USERPROFILE%\.cursor\mcp.json` |
-| `serverStatus: error` | Rebuild (`npm run build`); path `dist\index.js` existe?; Node ≥ 20 |
+| `%USERPROFILE%\.cursor\mcp.json` = `{ "mcpServers": {} }` | Suite nunca instalada — descobrir `MCP_AGENTS_ROOT` e rodar installer (`--config` no produto e/ou `--global`) |
+| Cursor não lista os `btg-*` | Confirmar 6 chaves no `mcp.json` certo; Rebuild; **Reload Window** |
+| `serverStatus: error` | `npm run build` no MCP-Agents; `dist\index.js` existe?; Node ≥ 20 |
+| Path OneDrive BTG 404 | Normal fora do laptop BTG — seguir ordem de descoberta; pedir path ao DONO |
 | `needsAuth` | `mcp_auth` no server afetado |
 | `Task not found` | Usar o `taskId` de `start_task`; estado em `.btg-mcp-state/` |
 | `NO_COMMAND_DETECTED` (QA) | Passar `command` explícito ou ter scripts/`devDependencies` detectáveis no projeto-alvo |
@@ -256,7 +301,10 @@ No Sync (`sync-report.md`): listar os 6 MCPs + path do `mcp.json` + resultado do
 ### Persistência vs simulação (fail-closed)
 
 - **Com** scheduler / Background Agent / Automation / **BTG MCP Dev Suite** (`btg-loop-supervisor-mcp` + dependências) materializado no Sync (§0.01): o loop de qualidade por task é determinístico e persistente em `.btg-mcp-state/`; registrar mecanismo em `sync-report.md`. Isso **não** equivale sozinho a scheduler 24/7 entre sessões de chat — Background Agent / Cursor Automation continua sendo o mecanismo inter-turno, se existir.
-- **Wake FORGE (JirowFlow):** em `CONTINUOUS`, materializar `Forge/06-loop/continuous-wake.cmd` + notify `AGENT_LOOP_TICK_forge_ci` (doc `continuous-wake.md`). `activate_agents` **sem** wake = Fail do Continuous Improvement Probe. Cada tick = Continuação da Sprint. `termine`/`encerre` mata o wake + `deactivate_agents`.
+- **Autopilot hook (heartbeat primário):** em `CONTINUOUS`, o gatilho canônico de auto-continuação é o **Cursor `stop` hook** `.cursor/hooks/forge-autopilot-stop.mjs` (registrado em `.cursor/hooks.json`, `loop_limit: null`). Ao fim de cada turno, se `loop-state.md` tiver `autopilot: on` + `mode ∈ {CONTINUOUS, DRAINING}` + `updated:` fresco (<24h), o hook devolve `followup_message` = `[FORGE — Continuação da Sprint]` e o Cursor reenvia como próxima mensagem — sem shell/background nem notify watcher (que morriam com a sessão e obrigavam reinício manual). Fail-open: fora desses estados não interfere. Anti-runaway: para após 200 follow-ups seguidos por conversa. Ritual de ativação grava `autopilot: on`; `termine`→`DRAINING` (desarma ao esvaziar fila ativa); `encerre`→`autopilot: off`. Doc: `continuous-wake.md`. **Probe:** autopilot hook armado (ou Automation/BTG equivalente) é obrigatório; `activate_agents`/CONTINUOUS **sem** heartbeat = Fail.
+- **Lock de ciclo (anti-corrida):** arquivo `forge/06-loop/.cycle.lock` (ou `Forge/06-loop/` se for a pasta com `loop-state.md`). **O stop hook NÃO cria o lock** — só **consulta**: se lock fresco (<3 min) existir, **não** emite followup (cede a outro ciclo). Criar lock no stop e apagar só no fim do próximo turno era um bug: o *próximo* stop via EEXIST e **silenciava a continuidade** (Kanban congelado com `CONTINUOUS` ainda ON). Contrato correto: o **ciclo AGENT** cria o lock no **INÍCIO** do turno e `DELETE` no **FIM** (após publish + `loop-state`). Lock órfão >3 min = o hook reclama/apaga. Windows: resolver path pela pasta que contém `loop-state.md`. Tag de falha se o ciclo encerrar sem liberar: `cycle-log.md`.
+- **Prompt de Continuação (contrato do hook):** o `followup_message` embute lock início/fim + regras de **Kanban visível** do §3.3 (*Ritmo de avanço — REGRA DE OURO*): publish **antes** de codar; **1 avanço de coluna adjacente por card por write+publish**; Dev fecha só `In Progress→Review` no mesmo turno; gates Spot/QA avançam no máx. 1 raia/card/turno; laudo obrigatório para `QA→User Validation` e `User Validation→Done`; `board.md` ≡ `loop-state.active_queue`; `updated:` fresco; liberar `.cycle.lock`. Alterar essas regras = atualizar **esta** spec **e** o texto em `forge-autopilot-stop.mjs` na mesma mudança.
+- **Wake FORGE (legado, plano C):** `Forge/06-loop/continuous-wake.ps1`/`.cmd` + notify `AGENT_LOOP_TICK_forge_ci` mantido para ambientes sem hooks. **Não** armar junto com o autopilot hook (ciclo duplicado). Cross-sessão real (Cursor fechado): **Cursor Automation (cron)** com o mesmo prompt de Continuação da Sprint (doc `continuous-wake.md`).
 - **Sem** mecanismo persistente: FORGE continua autonomamente **dentro dos turnos disponíveis** e em `[FORGE — Continuação da Sprint]`, mas **proibido** afirmar “execução 24/7” ou “loop rodando em background”. Registrar limitação + plano B no Sync.
 
 ### Tetos anti–backlog infinito (defaults N2+; FACILITADOR ajusta)
@@ -290,7 +338,7 @@ Spec detalhada: `/forge/02-especificacao/mission-control-spec.md` (Epic `MC-E01`
 | Superfície | O quê | Onde | Tempo real |
 |------------|-------|------|------------|
 | **Chat Surface** | Resumo executivo + P0 + WIP + riscos + link do Kanban | Tela do chat do agente (Canvas ao lado / painel da IDE + bloco `[DIRETOR — resumo executivo]`) | Atualiza **a cada turno/lote** (embed; Canvas não faz fetch) |
-| **Live Kanban Site** | Quadro Scrumban completo (colunas/cards) | Browser (`http://127.0.0.1:3847` default) | **≤2s** via watcher + SSE/WS sobre a projeção |
+| **Live Kanban Site** | Quadro Scrumban completo (colunas/cards) | Browser (`http://127.0.0.1:{ACTIVE_PORT}` — preferida `FORGE_MC_PORT\|\|3847`, com fallback se ocupada) | **≤2s** via watcher + SSE/WS sobre a projeção |
 
 Ambas são **projeções read-only**. SSOT continua: `board.md` + `loop-state.md`. Proibido UI escrever no board (MVP).
 
@@ -308,7 +356,7 @@ board.md + loop-state.md + cycle-log (tail) + último brief
 - Movimento de card **sem** republicar projeção = processo quebrado.
 - Chat/site divergentes do `board.md` → Bug P0 + smoke permanente.
 - Sem publisher materializado: Chat Surface **obrigatório**; site marcado `liveSite.up=false` — **proibido** afirmar Kanban “em tempo real”.
-- Todo card na projeção leva **`description`** (1–2 frases do que a tarefa faz / está fazendo) — no Live Kanban aparece **no próprio título** do card (`Título — descrição`); P0 também.
+- Todo card na projeção leva **`title`** (frase leiga) + **`description`** (1–2 frases do que muda para hóspede/negócio). No Live Kanban o **título manda**; o código (`id · priority`) fica só como referência. Proibido descrição = só nota de coluna (`Ready→IP`).
 
 ### Donos
 
@@ -359,7 +407,7 @@ Forge/   (ou /forge/ — mesma estrutura)
       index.html                  ← UI canônica (CSS + JS embutidos; um arquivo)
 ```
 
-Dependência: **Node.js** no PATH (mesmo runtime do Continuous Improvement Probe). Porta default `3847`; override `FORGE_MC_PORT`.
+Dependência: **Node.js** no PATH (mesmo runtime do Continuous Improvement Probe). Porta preferida default `3847`; override `FORGE_MC_PORT`. Em máquina com **vários projetos FORGE**, cada projeto deve fixar porta própria no Sync/`mission-control-spec.md` (ex.: projeto A `3847`, B `3848`) — ver *Multi-projeto / colisão de porta* abaixo.
 
 #### Tokens CSS canônicos (`:root` — não alterar sem migração de spec)
 
@@ -380,29 +428,34 @@ Tipografia: `14px/1.45 "Segoe UI", system-ui, sans-serif`. Tema **dark only** (M
 #### Layout (estrutura DOM obrigatória)
 
 1. **`<header>`** — esquerda: `h1` = `FORGE Kanban Live` + `#sources` (path do board); direita: pills `#mode` (modo do loop) + `#heartbeat` (`atualizado há Ns` / `conectando…` / `reconnect…` / `sem dados`).
-2. **`<section class="summary" id="summary">`** — headline (`summary.headline`) + linha meta `P0: {id} — {title} — {description} @{owner}`.
+2. **`<section class="summary" id="summary">`** — headline (`summary.headline`, título leigo em primeiro plano, ex. `Em foco: {title} (ref. {id})`) + linha meta `Em foco: {title} · ref. {id} — {description} @{owner}`.
 3. **`<div class="board" id="board">`** — grid horizontal `grid-auto-flow: column`; `grid-auto-columns: minmax(220px, 1fr)`; scroll-x; **8 colunas fixas nesta ordem:**
    `Backlog` → `Ready` → `In Progress` → `Review` → `Ready for QA` → `QA` → `User Validation` → `Done`.
 4. **Coluna** — `section.col`: fundo `--panel`, borda `--line`, `border-radius: 8px`; `h2` uppercase muted com contagem `Nome (N)`.
 5. **Card** — `article.card` (tabIndex=0): fundo `#12161f`, `border-radius: 6px`; hover/focus = borda `--accent`.
-6. **Tooltip portal** — `#card-tip` com `position: fixed; z-index: 9999` (**fora** do overflow do board — bug MC-BUG-03); seções Demanda / Onde está / Já feito / Vai fazer.
+6. **Tooltip portal** — `#card-tip` com `position: fixed; z-index: 9999` (**fora** do overflow do board — bug MC-BUG-03); título leigo em destaque + ref. do código; seções **O que é isso** / **Em qual etapa** / **Já concluído** / **Próximo passo**.
 7. **Live region** — `#live` (aria-live) para a11y do update.
 
-#### Anatomia do card (face)
+#### Anatomia do card (face) — linguagem leiga primeiro
+
+> **Por quê:** o DONO não é PO técnico. Código (`CV-F2.1 · P1`) é referência; o que vale é o título e o tooltip em português claro.
 
 | Zona | Conteúdo |
 |------|----------|
-| Topo esq. | `{id} · {priority}` em `--accent` |
-| Topo dir. | `{progress}%` (classes `low` / `mid` / `high` por faixas 0–39 / 40–79 / 80–100) |
-| Título | `{title}` + se houver descrição distinta: ` — ` + `<span class="brief">` descrição `</span>` (muted) |
+| Título (1º, destaque) | `{title}` em peso 650 / ~14px — **obrigatório** ser compreensível por leigo |
+| Resumo (opcional) | se `description` ≠ título: `<span class="brief">` em bloco abaixo (muted, ~12px) — o que isso muda para hóspede/negócio |
+| Meta | esq. `{id} · {priority}` em `--muted` (referência, não herói); dir. `{progress}%` (`low` / `mid` / `high`) |
 | Rodapé | `{type} · @{owner}` muted |
 | Barra | 4px; fill `linear-gradient(90deg, var(--accent), var(--ok))` na largura do % |
+
+**Contrato do `board.md` para a face:** `Título leigo — descrição em 1 frase`. Proibido usar a descrição só para nota de coluna (`Ready→IP`, `QA→UV laudo`). IDs permanecem no `[CV-…]` da linha; no Live Kanban aparecem só como `ref.` secundária.
 
 Progress default se omitido: Backlog 5 · Ready 15 · In Progress 45 · Review 65 · Ready for QA 80 · QA 90 · User Validation 95 · Done 100.
 
 #### Tooltip (hover/focus)
 
-- Conteúdo: **Demanda** (description ou 1º `detail.next`) · **Onde está** (`detail.where` ou `coluna · @owner`) · **Já feito** (`detail.done[]`) · **Vai fazer** (`detail.next[]`).
+- Cabeçalho: **título leigo** + linha `ref. {id} · {priority}`.
+- Conteúdo: **O que é isso** (description, senão 1º `detail.next`) · **Em qual etapa** (`detail.where` em PT claro, ex. “Em andamento agora · responsável @…”) · **Já concluído** (`detail.done[]`) · **Próximo passo** (`detail.next[]`).
 - Posicionamento: centrado sob o card; flip para cima se não couber; clamp nas bordas da viewport; esconde no scroll/resize.
 - `pointer-events: none`; sombra `0 12px 32px rgba(0,0,0,.55)`.
 
@@ -414,10 +467,22 @@ Progress default se omitido: Backlog 5 · Ready 15 · In Progress 45 · Review 6
 | `GET /api/projection` | JSON = conteúdo de `../08-diretor/status-projection.json`; `Cache-Control: no-store` |
 | `GET /events` | SSE (`text/event-stream`); push inicial + broadcast a cada mudança do arquivo |
 | Watch | `fs.watch` no dir da projeção; debounce ~80ms; só reage a `status-projection.json` |
-| Bind | `127.0.0.1` + `FORGE_MC_PORT \|\| 3847` |
-| Log stdout | `[CALDEIRA — mission control] listening http://127.0.0.1:{port}` |
+| Bind | `127.0.0.1` + porta preferida `FORGE_MC_PORT \|\| 3847` |
+| Fallback de porta | Se `EADDRINUSE`, tentar `port+1` até `FORGE_MC_PORT_TRIES` (default **20**). **Proibido** morrer em silêncio e deixar o DONO na URL de outro projeto |
+| `liveSite.url` | Sempre a porta **efetivamente ligada** (`ACTIVE_PORT`), não a preferida |
+| Log stdout | `[CALDEIRA — mission control] listening http://127.0.0.1:{ACTIVE_PORT}` (+ warn se `ACTIVE_PORT ≠ preferida`) |
 
 Fallback UI: `fetch("/api/projection")` no load + `EventSource("/events")`. Latência alvo publish→DOM **≤2s**.
+
+#### Multi-projeto / colisão de porta (fail-closed — lição de PoC)
+
+> **Por quê:** vários repos FORGE na mesma máquina costumam defaultar `3847`. Quem sobe primeiro “segura” a porta; o segundo morre com `EADDRINUSE` (ou nem sobe) e o DONO continua olhando o Kanban **do outro projeto** — cards “presos” em Ready for QA / QA / UV que não são deste board.
+
+1. **Porta por projeto:** no Sync N2+, CALDEIRA grava em `mission-control-spec.md` (e no env/`start-kanban.cmd` se preciso) um `FORGE_MC_PORT` **único na máquina** quando houver risco de colisão. Default global continua `3847`; projetos secundários usam `3848+`.
+2. **Fallback obrigatório no `server.js`:** `listenWithFallback` (ou equivalente) — nunca exit silencioso em `EADDRINUSE` sem tentar a próxima porta e logar a URL real.
+3. **URL canônica = URL real:** `FORGE, abra o kanban` / brief / Chat Surface / `liveSite.url` reportam **a porta em que o processo deste workspace está escutando**. Proibido afirmar `http://127.0.0.1:3847` se o bind efetivo for outra.
+4. **Identidade do board (smoke MC-S08):** antes de diagnosticar “esteira parada”, CALDEIRA/GUARDIÃO confirma que o browser aponta para **este** workspace — `#sources` / path do `board.md` na UI, ou `GET /api/projection` com IDs/headline do projeto atual. Kanban de outro repo = Bug P0 de Mission Control, não de QA.
+5. **`FORGE, feche o kanban`:** mata o `node` de `09-mission-control/server.js` **deste** workspace (pela URL/porta ativa), não “qualquer coisa na 3847”.
 
 #### Publisher (`publish-projection.js`) — invariantes
 
@@ -435,10 +500,10 @@ Tag: `[CALDEIRA — mission control]`. Windows: **cmd.exe** apenas.
 2. Se `Forge/09-mission-control/public/index.html` **ausente ou divergente** do visual canônico (§ tokens + layout + 8 cols + tooltip portal): **criar/sobrescrever** a partir desta spec (ou copiar do template JirowFlow `Forge/09-mission-control/` + `08-diretor/publish-projection.js`).
 3. Garantir `08-diretor/publish-projection.js` + rodar uma vez:
    `node Forge\08-diretor\publish-projection.js`
-4. Subir site: `Forge\09-mission-control\start-kanban.cmd` (ou `node server.js` no dir).
-5. Abrir `http://127.0.0.1:3847` — checklist visual Pass (abaixo).
-6. Registrar URL + `liveSite.up` no Sync / `status-projection.json`.
-7. Comandos: `FORGE, abra o kanban` sobe/abre; `FORGE, feche o kanban` mata o processo do server (SSOT permanece).
+4. Subir site: `Forge\09-mission-control\start-kanban.cmd` (ou `node server.js` no dir), com `FORGE_MC_PORT` do projeto se multi-FORGE na máquina.
+5. Abrir a **URL real do stdout** (`listening http://127.0.0.1:{ACTIVE_PORT}`) — checklist visual Pass (abaixo) + **MC-S08** (identidade do board = este workspace).
+6. Registrar URL efetiva + `liveSite.up` no Sync / `status-projection.json` (nunca URL stale de outro projeto).
+7. Comandos: `FORGE, abra o kanban` sobe/abre e devolve a URL real; `FORGE, feche o kanban` mata o processo do server **deste** workspace (SSOT permanece).
 
 **Fail-closed:** N2+ sem árvore acima materializada, ou UI que não passa o checklist visual = **Fail** do Mission Control Probe no Sync — **proibido** afirmar “Kanban live pronto”. N1: site opcional.
 
@@ -449,12 +514,13 @@ Tag: `[CALDEIRA — mission control]`. Windows: **cmd.exe** apenas.
 | V1 | Fundo `#0f1218`; colunas `#171b24`; texto claro (não tema light) |
 | V2 | Título da página / h1 = `FORGE Kanban Live` |
 | V3 | 8 colunas na ordem canônica, com contagem `(N)` |
-| V4 | Card mostra id·pri, %, `título — descrição`, type·@owner, barra gradiente |
-| V5 | Hover/focus no card: tooltip portal fixo com Demanda / Onde / Feito / Próximo |
+| V4 | Card: **título leigo em destaque** + brief; `id·pri` muted como referência; %; type·@owner; barra |
+| V5 | Hover/focus: tooltip com título + ref. + O que é isso / Em qual etapa / Já concluído / Próximo passo |
 | V6 | Pills de modo + heartbeat `atualizado há Ns` |
-| V7 | Summary com headline + P0 |
+| V7 | Summary com headline “Em foco” (título primeiro; código só ref.) |
 | V8 | Após republicar projeção, UI atualiza sem F5 em ≤2s (SSE) |
 | V9 | Raias Review / Ready for QA / QA / User Validation refletem o board (não sempre vazias por hardcode) |
+| V10 (**MC-S08**) | UI / `liveSite.url` / `#sources` correspondem ao `board.md` **deste** workspace (não a outro FORGE na mesma máquina) |
 
 Evidência: screenshot E3 da página no Sync ou no pack MC (`[GUARDIÃO — spot QA]` / smoke MC).
 
@@ -465,6 +531,8 @@ Evidência: screenshot E3 da página no Sync ou no pack MC (`[GUARDIÃO — spot
 - Segunda SSOT editável no browser.
 - Omitir `description` nos cards / omitir raias de gate na projeção.
 - Servir em `0.0.0.0` por default (MVP = localhost).
+- Assumir que `http://127.0.0.1:3847` é sempre “este” projeto quando há outro FORGE na máquina.
+- `server.js` que faz exit em `EADDRINUSE` sem fallback + log da URL alternativa.
 
 ---
 
@@ -497,8 +565,9 @@ Tag: `[DIRETOR — Desinstalação FORGE]`. Executar na ordem; registrar cada pa
 
 1. Tratar como `FORGE, encerre` → `STOPPED` (não drena; aborta WIP FORGE).
 2. Se `btg-loop-supervisor-mcp` estiver disponível: `deactivate_agents`.
-3. `FORGE, feche o kanban` — matar processo do Live Kanban (`node` em `09-mission-control/server.js`, porta `3847` / `FORGE_MC_PORT`).
+3. `FORGE, feche o kanban` — matar processo do Live Kanban **deste** workspace (`node` em `09-mission-control/server.js`, porta preferida `FORGE_MC_PORT` **ou** `ACTIVE_PORT` se houve fallback).
 4. Se existir wake: parar `Forge/06-loop/continuous-wake.cmd` (ou equivalente) e qualquer Automation / Background Agent FORGE documentado no Sync.
+5. Desarmar o autopilot: gravar `autopilot: off` em `loop-state.md` e remover a entrada `stop` `forge-autopilot-stop.mjs` de `.cursor/hooks.json` (preservar outros hooks, ex.: impeccable).
 
 #### Fase 1 — Inventário (obrigatório antes de apagar)
 
@@ -514,6 +583,7 @@ Varredura e lista no chat (paths absolutos):
 | Estado MCP | `.btg-mcp-state/`, `.btg-mcp-backups/` |
 | Outros hosts | seções EQUIPE FORGE em `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, custom instructions |
 | Wake / scripts | `continuous-wake.cmd`, `start-kanban.cmd` sob árvore FORGE, notify `AGENT_LOOP_TICK_forge_ci` |
+| Autopilot hook | `.cursor/hooks/forge-autopilot-stop.mjs` + entrada `stop` em `.cursor/hooks.json` |
 
 Mostrar o inventário ao DONO em **uma** mensagem. Se algo parecer código de produto (ex.: pasta `forge/` misturada com app), **parar e perguntar** antes de apagar.
 
@@ -610,7 +680,7 @@ Execute agora.
 - **Single source:** QA, Gherkin, Kanban, visual gates and observable-evidence details (§3.6) live in their dedicated sections — the consolidated prompt points to them without recopying the whole protocol.
 - **Proof, not promise (§3.6):** nothing is declared done from reading code. Exercise the real system, capture what the user would see, and review that evidence with an agent who did not produce it.
 - **Assets before code (§1.1):** do not invent primaries (procedural meshes, placeholder art, reinvented libs) as the *first* path when free/paid-accessible downloads exist. Hunt → download → smoke-test → plan wiring → *then* develop.
-- **Autonomia de backlog (§0.02):** after a master task, FORGE owns the board and P0 pull; DONO-written role+metric prompts are prompt tax (process failure).
+- **Autonomia de backlog (§0.02):** after a master task, FORGE owns the board and P0 pull; DONO-written role+metric prompts are prompt tax (process failure). **Pedido de trabalho do DONO → card no Kanban** com prioridade `0|1|2` (default `0` / celeridade; FORGE pode perguntar; BÚSSOLA reordena). Meta-comandos não geram card.
 - **Melhoria contínua (§0.03):** modo `CONTINUOUS` só com comando explícito; a própria equipe testa, tira fotos, avalia visual/funcional e gera lista de bugs/melhorias (Loop de auto-avaliação); VIGIA + QA contínuo alimentam backlog via intake/dedup; `termine` drena fila ativa; tetos anti-backlog infinito.
 - **Mission Control (§0.04):** Chat Surface (resumo+WIP no chat) + Live Kanban site com **visual canônico** (`09-mission-control/`, tokens/layout §0.04); instalação no Sync N2+; SSOT permanece nos arquivos; publish fail-closed.
 - **Desinstalação (§0.05):** `FORGE, desinstale` remove artefatos do time, rules/skills Cursor e MCPs `btg-*` do escopo pedido — sem apagar código de produto.
@@ -672,8 +742,8 @@ This specification (team creation / consolidated prompt) is the **single source 
 5. Always reuse existing components when adapting is more efficient than recreating.
 6. Run the QA squad's **Capability Probe** (§3.6.2) — what this environment can automate, capture and review — and provision what is possible before promising evidence.
 7. **Toolchain Probe (dia 0 — antes de travar stack):** when the demand needs an engine, runtime, SDK or heavy toolchain (UE, Godot, Unity, Node LTS, etc.), **CALDEIRA + ORÁCULO** attempt a **real download/install probe** of candidates *before* Dimensionamento locks the stack. Tag: `[CALDEIRA — toolchain probe]`. Do **not** assume a toolchain the network has not proven. HTTP 403 / CDN block → log error + try next candidate + plan B — never invent “we'll install later” as Pass.
-8. **Continuous Improvement Probe (instalação do loop §0.03):** detect and, when supported, configure: (a) scheduler / Background Agent / Cursor Automation / **BTG MCP Dev Suite** (§0.03 — *MCP Dev Suite*); (b) logical agent **VIGIA** (or ORÁCULO accumulating it); (c) smoke/QA runners (CALDEIRA + ÍRIS + `btg-qa-mcp`); (d) persistence files under `/forge/06-loop/` (`loop-state.md`, `intake-queue.md`, `discovery-log.md`, `cycle-log.md`, `debt-register.md`). Se os 6 MCPs `btg-*` estiverem ausentes ou em `error`/`needsAuth`, **CALDEIRA executa o ritual de instalação** do §0.03 antes de declarar o probe Pass. Tag: `[FACILITADOR — melhoria contínua]` no Sync quando o probe completar. **Fail-closed:** without a persistent mechanism, FORGE may continue autonomously **inside available turns** + `[FORGE — Continuação da Sprint]`, but **must not claim** 24/7 / background execution — log the limitation and the alternate mechanism in `sync-report.md`.
-9. **Mission Control Probe (instalação do Kanban live §0.04) — N2+:** CALDEIRA materializa a árvore `08-diretor/` + `09-mission-control/` com o **visual canônico** (tokens, layout, 8 colunas, tooltip portal, SSE). Se `public/index.html` / `server.js` / `publish-projection.js` estiverem ausentes ou divergentes → criar/sobrescrever a partir do §0.04 (referência JirowFlow). Rodar `node …\publish-projection.js`, subir `start-kanban.cmd`, validar smoke **MC-S07** (checklist visual) + MC-S01…S06. Tag: `[CALDEIRA — mission control]`. **Fail-closed:** sem site materializado + visual Pass, proibido afirmar Kanban live / `liveSite.up=true`. N1: opcional.
+8. **Continuous Improvement Probe (instalação do loop §0.03):** detect and, when supported, configure: (a) heartbeat de auto-continuação — **autopilot `stop` hook** (`.cursor/hooks/forge-autopilot-stop.mjs` + `.cursor/hooks.json`) como primário, e/ou scheduler / Background Agent / Cursor Automation (cron, cross-sessão) / **BTG MCP Dev Suite** (§0.03 — *MCP Dev Suite* / *Persistência*); se o hook estiver ausente, **CALDEIRA cria** antes de declarar Pass; (b) logical agent **VIGIA** (or ORÁCULO accumulating it); (c) smoke/QA runners (CALDEIRA + ÍRIS + `btg-qa-mcp`); (d) persistence files under `/forge/06-loop/` (`loop-state.md`, `intake-queue.md`, `discovery-log.md`, `cycle-log.md`, `debt-register.md`). Se os 6 MCPs `btg-*` estiverem ausentes ou em `error`/`needsAuth`, **CALDEIRA executa o ritual de instalação** do §0.03 antes de declarar o probe Pass. Tag: `[FACILITADOR — melhoria contínua]` no Sync quando o probe completar. **Fail-closed:** without a persistent mechanism, FORGE may continue autonomously **inside available turns** + `[FORGE — Continuação da Sprint]`, but **must not claim** 24/7 / background execution — log the limitation and the alternate mechanism in `sync-report.md`.
+9. **Mission Control Probe (instalação do Kanban live §0.04) — N2+:** CALDEIRA materializa a árvore `08-diretor/` + `09-mission-control/` com o **visual canônico** (tokens, layout, 8 colunas, tooltip portal, SSE) e `server.js` com **fallback de porta** (`EADDRINUSE` → próxima livre; `liveSite.url` = `ACTIVE_PORT`). Se `public/index.html` / `server.js` / `publish-projection.js` estiverem ausentes ou divergentes → criar/sobrescrever a partir do §0.04 (referência JirowFlow). Em multi-FORGE na máquina, fixar `FORGE_MC_PORT` por projeto. Rodar `node …\publish-projection.js`, subir `start-kanban.cmd`, validar smoke **MC-S07** (checklist visual) + **MC-S08** (URL/board = este workspace) + MC-S01…S06. Tag: `[CALDEIRA — mission control]`. **Fail-closed:** sem site materializado + visual Pass, proibido afirmar Kanban live / `liveSite.up=true`. N1: opcional.
 
 ### Materialization vs. simulation
 
@@ -701,7 +771,7 @@ At the end of synchronization, present in chat (`[DIRETOR — Sync FORGE]`) and 
 | Platform limitations | what blocked full materialization (incl. “sem loop persistente”) |
 | Not implemented | spec capabilities that could not be materialized + rationale |
 | Migration (when spec changed) | include Anti–prompt-tax §0.02 / Melhoria contínua §0.03 / Mission Control §0.04 / §3.7 Playable Gate / DoD roda normal when those sections are new vs last sync |
-| Mission Control (§0.04) | árvore `08-diretor`+`09-mission-control` materializada? · visual canônico MC-S07 Pass? · projeção `status-projection.json`? · Chat Surface? · Live Kanban URL/`liveSite.up`? · smokes MC-S01…S07 |
+| Mission Control (§0.04) | árvore `08-diretor`+`09-mission-control` materializada? · visual canônico MC-S07 Pass? · MC-S08 identidade deste workspace? · fallback de porta / `FORGE_MC_PORT` se multi-FORGE? · projeção `status-projection.json`? · Chat Surface? · Live Kanban URL real/`liveSite.up`? · smokes MC-S01…S08 |
 
 Only after sync (or an explicit "environment already compliant / simulation only" report) proceed to Smart intake + demand Sizing. Toolchain Probe completes **before** Dimensionamento that locks engine/stack.
 
@@ -1072,7 +1142,7 @@ Caso o volume de código ou artefatos ultrapasse a capacidade de um único turno
 
 - **Característica:** pragmático, decide rápido, prioriza valor sobre completude.
 - **Função:** traduz a especificação dos stakeholders (já filtrada pelo ORÁCULO) em Product Backlog hierárquico (Epic → Feature → PBI → Task); é o único que negocia escopo com os stakeholders; dono do "Definition of Done" (inclui DoD **“roda normal”** / sessão útil mínima para produtos interativos, §3.7); após tarefa master, **gera o board completo autonomamente** (§0.02) com critérios derivados do PRD / GDD / dossiê / benchmark / **playbook** (§0.1.1) / **category fluency** (§1.2) / seeds de **Session Smoke** (§3.8) — sem esperar o DONO listar PBIs; reprioriza Bugs abertos pelo GUARDIÃO/CURADOR no quadro Kanban; garante Gherkin proporcional antes de Ready. Em `CONTINUOUS`: dono do **gate de promoção** intake→board (dedup + score §3.3.1) a partir dos achados da VIGIA e Bugs do QA contínuo; executa **top-up** até o piso e respeita o teto (§0.03); arquiva dívida em `debt-register.md`.
-- **Lanes de promoção (N2+ CONTINUOUS):** quando `intake` elegível > 0 e `Backlog+Ready` < teto, a BÚSSOLA **materializa até L lanes paralelas** (default §0.03: N2→2, N3–4→3) via Tasks/subagents — mesma prioridade global, escrita em paralelo. Não são POs rivais: não há ranking conflitante. Identificação: `[BÚSSOLA]`, `[BÚSSOLA-α|β|γ]`, `[BÚSSOLA — dedup]`, `[BÚSSOLA — top-up]`.
+- **Lanes de promoção (N2+ CONTINUOUS):** quando `intake` elegível > 0 e `Backlog+Ready` < teto, a BÚSSOLA **materializa até L lanes paralelas** (default §0.03: N2→2, N3–4→3) via Tasks/subagents — mesma prioridade global, escrita em paralelo. Não são POs rivais: não há ranking conflitante. Identificação: `[BÚSSOLA]`, `[BÚSSOLA-α|β|γ]`, `[BÚSSOLA — dedup]`, `[BÚSSOLA — top-up]`, `[BÚSSOLA — pedido DONO]`.
 
 ### 🛠️ FACILITADOR — Scrum Master
 
@@ -1333,15 +1403,29 @@ Backlog → Ready → In Progress → Review (ARGUS/FUNDAÇÃO/CINZEL)
 - `publish-projection.js` (ou equivalente) **hardcodar** `Review` / `Ready for QA` / `QA` / `User Validation` como `[]` sem ler o `board.md`.
 - No `detail.next` do card em In Progress: texto do tipo “Move Done” — o próximo passo canônico é **Review**.
 - Em CONTINUOUS: fechar lote sem pelo menos um move visível nas raias de gate quando houver card saindo de In Progress.
+- **Kanban “teleporte”:** num único update de `board.md`, colapsar várias raias (`In Progress→Done`, `Ready for QA→Done`, `Backlog→Done`, ou `Review→…→Done` na mesma resposta). O DONO não vê o card habitar as gates no Live Kanban — falha de processo mesmo que a sequência teórica exista no texto do cycle-log.
 
-**Exceções estreitas (documentar no card + cycle-log):** Nível 1 Micro pode colapsar Review+QA num mini-gate na mesma resposta **desde que** o board registre o card em `QA` (mesmo que por minutos) antes de Done; Spike puro de pesquisa pode ir `In Progress → Review → Done` **sem** QA se não houver superfície testável — nunca silent skip.
+#### Ritmo de avanço — REGRA DE OURO (Nível 2+ / CONTINUOUS — fail-closed)
+
+> **Por quê (lição de PoC):** “passar pelas 8 colunas” na spec não bastou — agentes avançavam Dev+Review+QA+UV+Done no **mesmo** write e o Kanban live ficava vazio nas raias de gate (ou o DONO só via saltos). A esteira só ficou observável com **1 avanço de coluna adjacente por card por publish**.
+
+1. **Publish antes de codar:** FACILITADOR move P0 `Backlog→Ready→In Progress` (ou `Ready→In Progress`), grava `board.md` e roda `node forge/08-diretor/publish-projection.js` **antes** do MOTOR editar código — o DONO deve ver o card em In Progress no Live Kanban.
+2. **1 coluna / card / write+publish:** em um único update de `board.md`, cada card sobe no máximo **uma** raia adjacente na sequência canônica. Vários cards podem avançar em paralelo no mesmo turno, cada um ≤1 passo.
+3. **Dev no turno:** ao fechar implementação, mover só `In Progress → Review` (+publish). **Proibido** promover `Review→…→Done` na mesma resposta. Spot/laudo das gates seguintes ficam para o(s) próximo(s) ciclo(s).
+4. **Spot / QA no turno:** avançar no máximo **uma** raia de gate por card (ex.: `Ready for QA→QA` **ou** `QA→User Validation` **ou** `User Validation→Done`) + publish após o move. Laudo em `/forge/05-qa/laudos/` é **obrigatório** para `QA→User Validation` e `User Validation→Done` (spot basta para `Review→Ready for QA` e `Ready for QA→QA` quando o plano §3.6 permitir).
+5. **Consistência SSOT:** `board.md` (IDs em In Progress) ≡ `loop-state.md` `active_queue`. Após moves: republicar projeção; atualizar `loop-state` (`updated`, `continuous_cycle`, `active_queue` / filas de gate).
+6. **WIP visível:** enquanto houver trabalho elegível, manter 1–2 cards em In Progress (ou nas raias de gate). Fechar turno com Ready / In Progress / Review / Ready for QA / QA / User Validation **todos vazios** e só Backlog+Done = **teleporte** → `[FACILITADOR — prompt tax]`.
+7. **Autopilot:** o prompt embutido em `forge-autopilot-stop.mjs` materializa estes itens; ver §0.03 (*Lock de ciclo* + *Prompt de Continuação*).
+
+**Exceções estreitas (documentar no card + cycle-log):** Nível 1 Micro pode colapsar Review+QA num mini-gate na mesma resposta **desde que** o board registre o card em `QA` (mesmo que por minutos) antes de Done; Spike puro de pesquisa pode ir `In Progress → Review → Done` **sem** QA se não houver superfície testável — nunca silent skip. Em N2+, a REGRA DE OURO prevalece sobre “otimizar throughput” no mesmo turno.
 
 **WIP sugerido** (FACILITADOR ajusta): In Progress ≤ 5 (uma lane por programador da Bancada MOTOR, salvo Tasks compartilhadas); Review ≤ 3; Ready for QA / QA ≤ 3; User Validation ≤ 2. Cards não "empurram" — só avançam por pull quando a coluna destino tem capacidade.
 
 ### Template mínimo de card
 
 - ID, tipo (`Epic`|`Feature`|`PBI`|`Task`|`Bug`|`Spike`), título, pai (exceto Epic)
-- Prioridade / severidade (Bugs: `Blocker` | `Critical` | `Major` | `Minor`)
+- **`priority: 0|1|2`** (prioridade do DONO / pull — §0.02) com origem `DONO` | `inferido` | `score` (no board: prefixo legível `p0` / `p1` / `p2`)
+- Severidade (Bugs: `Blocker` | `Critical` | `Major` | `Minor`) — **não** substitui `priority`
 - Responsável atual + lanes paralelas relacionadas
 - Estado Kanban + Definition of Done do nível
 - Para PBI: link para arquivo Gherkin em `/forge/02-especificacao/gherkin/`
@@ -1354,45 +1438,47 @@ Backlog → Ready → In Progress → Review (ARGUS/FUNDAÇÃO/CINZEL)
 # FORGE Board
 
 ## Backlog
-- [ID-01] [PBI] Titulo (@Agente)
+- [ID-01] [PBI] p2 Titulo (@Agente)
 
 ## Ready
-- [ID-02] [Task] Titulo (@BIGORNA)
+- [ID-02] [Task] p1 Titulo (@BIGORNA)
 
 ## In Progress
-- [ID-03] [Task] Titulo (@MALHO)
+- [ID-03] [Task] p0 Titulo (@MALHO)
 
 ## Review
-- [ID-04] [PBI] Titulo (@FUNDAÇÃO)
+- [ID-04] [PBI] p1 Titulo (@FUNDAÇÃO)
 
 ## Ready for QA
-- [ID-04b] [PBI] Titulo (@GUARDIÃO)
+- [ID-04b] [PBI] p1 Titulo (@GUARDIÃO)
 
 ## QA
-- [ID-05] [PBI] Titulo (@GUARDIÃO)
+- [ID-05] [PBI] p0 Titulo (@GUARDIÃO)
 
 ## User Validation
-- [ID-06] [PBI] Titulo (@Stakeholder)
+- [ID-06] [PBI] p1 Titulo (@Stakeholder)
 
 ## Done
-- [ID-07] [Bug] Titulo (@MALHO)
+- [ID-07] [Bug] p0 Titulo (@MALHO)
 ```
 
-**Regras do `board.md`:** uma linha por card; **as 8 colunas canônicas como `##` headings em todo publish** (vazias explícitas com `_(vazio)_` se preciso — nunca omitir o heading); tipo ∈ `Epic`|`Feature`|`PBI`|`Task`|`Bug`|`Spike`; `@Agente` = responsável atual. Sem prosa longa no board — detalhes ficam nos arquivos do card/Gherkin/QA. **Card só existe em uma coluna ativa** (não duplicar em Ready e In Progress).
+**Regras do `board.md`:** uma linha por card; **as 8 colunas canônicas como `##` headings em todo publish** (vazias explícitas com `_(vazio)_` se preciso — nunca omitir o heading); tipo ∈ `Epic`|`Feature`|`PBI`|`Task`|`Bug`|`Spike`; prefixo `p0`|`p1`|`p2` após o tipo quando a prioridade for conhecida; `@Agente` = responsável atual. Sem prosa longa no board — detalhes ficam nos arquivos do card/Gherkin/QA. **Card só existe em uma coluna ativa** (não duplicar em Ready e In Progress).
 
 **Projeção Mission Control (§0.04):** cada movimento relevante no `board.md` dispara publish de `/forge/08-diretor/status-projection.json` (FACILITADOR). O publisher **deve** popular `columns.Review`, `columns["Ready for QA"]`, `columns.QA`, `columns["User Validation"]` a partir do board — arrays vazios só quando o board estiver vazio nessas raias. O Chat Surface e o Live Kanban Site **só leem** essa projeção — nunca substituem o `board.md`. Smoke **MC-S05**: WIP de cada raia ativa no board ≡ projeção (não só In Progress).
 
 ### 3.3.1 Intake, deduplicação e priorização (melhoria contínua)
 
-Em modo `CONTINUOUS` (e ao absorver prompt-tax), **nenhum achado vai direto ao `board.md`**. Pipeline obrigatório:
+Em modo `CONTINUOUS` (e ao absorver achados de VIGIA/QA/CURADOR), **nenhum achado de descoberta vai direto ao `board.md`** sem dedup — **exceto** pedido **explícito de trabalho** do DONO sob FORGE (§0.02 Pedido do DONO → Kanban), que cria/promove card na mesma resposta (ainda com dedup se duplicata). Pipeline de descoberta:
 
 ```text
-Achado (VIGIA / GUARDIÃO / CURADOR / DONO / prompt-tax)
+Achado (VIGIA / GUARDIÃO / CURADOR / prompt-tax absorvido via intake)
     → /forge/06-loop/intake-queue.md
     → Dedup (BÚSSOLA + FACILITADOR)  →  tag [BÚSSOLA — dedup]
     → Score / prioridade (ranking global único)
     → Top-up (lanes α/β/γ em paralelo)  →  tag [BÚSSOLA — top-up]
     → Backlog (board.md)  OU  descarte / debt-register.md
+
+Pedido explícito DONO (trabalho)  →  board.md na mesma resposta  →  tag [BÚSSOLA — pedido DONO]
 ```
 
 **Dedup — mesma identidade se ≥2 critérios baterem (merge no card canônico):**
@@ -1401,7 +1487,7 @@ Achado (VIGIA / GUARDIÃO / CURADOR / DONO / prompt-tax)
 - Mesmo invariante de domínio (FUNDAÇÃO)
 - Mesmo smoke ID permanente (§3.8)
 - Título similar + mesma causa raiz / `@Agente`
-- Duplicata de prompt-tax já absorvida
+- Duplicata de prompt-tax / pedido DONO já absorvida
 
 Duplicatas viram comentário/link no card pai; evento em `cycle-log.md`.
 
@@ -1411,7 +1497,10 @@ Duplicatas viram comentário/link no card pai; evento em `cycle-log.md`.
 score = (severidade × 4) + (impacto_usuario × 3) + (risco_regressão × 2) + (esforço⁻¹ × 1)
 ```
 
-- Bug Blocker/Critical ou Playable Gate Fail → P0 automático
+- Prioridade DONO `0` → topo do pull elegível (boost máximo; alias operacional “P0”)
+- Prioridade DONO `1` → acima do score médio da sprint (Ready cedo)
+- Prioridade DONO `2` → segue o score (Backlog / agenda normal)
+- Bug Blocker/Critical ou Playable Gate Fail → P0 automático (pode superar `priority` do DONO)
 - Category fluency crítica não feita → P0 em N2+ UI
 - Beauty/polish → congelado se Playable Fail ou se Backlog > teto em `DRAINING`
 
@@ -1853,6 +1942,15 @@ O laudo é insumo do GUARDIÃO, que dá o veredito do gate e abre os Bugs no Kan
 
 Nunca só um dos dois: o DOM mente sobre visibilidade, e a imagem não expõe estado/semântica.
 
+**Connected Runtime Gate (obrigatório para UI que consome API):**
+
+1. Teste com `page.route(...).fulfill()`, mock, fixture, stub ou replay de HAR prova apenas UI/componente. Ele **não** prova integração, roteamento, autenticação, autorização, banco nem que o runtime carregou o build atual; nunca fecha sozinho QA, User Validation ou Done.
+2. Cada fluxo crítico precisa de ao menos um run Playwright autenticado contra a stack real do ambiente aprovado, sem interceptar os endpoints críticos. Preferir `storageState` de uma sessão válida já autenticada; login automatizado é fallback. Conectar por CDP ao navegador ativo do DONO só quando disponível e autorizado, sem assumir controle invasivo da sessão.
+3. O run conectado espera e valida explicitamente cada resposta crítica (`2xx` e schema mínimo), falha em qualquer `4xx/5xx` inesperado, erro de console ou `pageerror`, e captura E2+E3 depois dos dados reais renderizarem. “A tela abriu” não basta.
+4. Mudança de rota, proxy, serviço ou build exige reiniciar/rebuildar o runtime-alvo antes do run e provar que o processo vivo carrega a mudança. Código-fonte atualizado com container/processo antigo é **FAIL operacional**.
+5. O manifesto registra `data_mode: real|mock`, todas as rotas interceptadas, origem da autenticação (`storageState|login|cdp`), URL/API base, commit/branch/dirty state, versão, PID/container/image digest e horário de startup do runtime. Anexa `network.json`, `console.log`, `pageerror.log`, E2, E3 e trace E4; `critical_responses` contém método, path, status, timing e schema/corpo sanitizado. Evidência mock deve ser rotulada e nunca apresentada como tela real do produto.
+6. Se credencial/sessão/stack impedir o run conectado, o cenário fica `INCONCLUSIVO` ou `Blocked — DONO`; é proibido rebaixar para mock e promover o card a Done.
+
 **Determinismo obrigatório** (captura instável gera laudo `INCONCLUSIVO` e desperdiça ciclo):
 
 - viewport fixa e declarada — padrão desktop `1440x900` e mobile `390x844`; `deviceScaleFactor` declarado;
@@ -2277,6 +2375,11 @@ paralelismo + throttling + Circuit Breaker. Gates condicionais (Asset / Playable
    Proibido “próximo passo seria…” sem já ter puxado e iniciado o P0.
    User Validation ≠ esperar o DONO: smoke/evidência automática em paralelo;
    `Blocked — DONO` só por hardware/acesso real.
+   **Pedido de trabalho do DONO → card no Kanban** (mesma resposta); prioridade
+   `0|1|2` (default `0` / celeridade; FORGE pode perguntar “0, 1 ou 2?” sem
+   bloquear); BÚSSOLA reordena (`[BÚSSOLA — pedido DONO]`). Meta-comandos
+   (status / kanban / termine / encerre / melhoria contínua / desinstale)
+   **não** geram card.
 9b. **Melhoria contínua (§0.03) — modo explícito:** default = `NORMAL` (sem
    descoberta contínua). `FORGE, melhoria contínua` → `CONTINUOUS`: a
    **própria equipe** testa o sistema, tira fotos/screenshots, avalia visual
@@ -2295,26 +2398,32 @@ paralelismo + throttling + Circuit Breaker. Gates condicionais (Asset / Playable
    `[VIGIA — varredura]`, `[DIRETOR — drenagem]`,
    `[DIRETOR — melhoria contínua encerrada]`,
    `[DIRETOR — Circuit Breaker backlog]`, `[BÚSSOLA — dedup]`,
-   `[BÚSSOLA — top-up]`, `[BÚSSOLA-α|β|γ]`,
+   `[BÚSSOLA — top-up]`, `[BÚSSOLA — pedido DONO]`, `[BÚSSOLA-α|β|γ]`,
    `[GUARDIÃO — spot QA]`.
 9c. **Mission Control (§0.04):** o DONO acompanha no **chat** (Chat Surface:
    resumo + P0 + WIP via Canvas/painel + `[DIRETOR — resumo executivo]`) e no
    **Kanban live** (site browser ≤2s) com **visual canônico** (dark
-   `#0f1218`/`#171b24`, 8 colunas, card com %/descrição/barra, tooltip
-   portal). No Sync N2+: CALDEIRA **instala** `08-diretor/publish-projection.js`
+   `#0f1218`/`#171b24`, 8 colunas, card com **título leigo** em destaque +
+   código só como `ref.`, %/barra, tooltip portal em PT claro). No Sync N2+: CALDEIRA **instala** `08-diretor/publish-projection.js`
    + `09-mission-control/` (`server.js`, `start-kanban.cmd`,
-   `public/index.html`) — Mission Control Probe + smoke MC-S07. SSOT =
-   `board.md`; projeção = `08-diretor/status-projection.json`. FACILITADOR
-   publica a cada move **com as 8 colunas** (gates incluídas — proibido
-   hardcode `[]`); DIRETOR refresha Chat Surface; CALDEIRA serve
-   `http://127.0.0.1:3847`. Comandos: `FORGE, status` ·
+   `public/index.html`) — Mission Control Probe + smoke MC-S07 + **MC-S08**
+   (identidade do board = este workspace). SSOT = `board.md`; projeção =
+   `08-diretor/status-projection.json`. FACILITADOR publica a cada move
+   **com as 8 colunas** (gates incluídas — proibido hardcode `[]`); DIRETOR
+   refresha Chat Surface; CALDEIRA serve `127.0.0.1` na porta preferida
+   (`FORGE_MC_PORT\|\|3847`) com **fallback** se ocupada e reporta a **URL
+   real** (`liveSite.url` = `ACTIVE_PORT`). Multi-FORGE na máquina → porta
+   própria por projeto. Comandos: `FORGE, status` ·
    `FORGE, abra o kanban` · `FORGE, feche o kanban`. Tags:
    `[DIRETOR — mission control]`, `[FACILITADOR — mission control]`,
    `[CALDEIRA — mission control]`. Spec:
    `02-especificacao/mission-control-spec.md` + visual no §0.04.
 9d. **Raias de gate (§3.3):** N2+ todo card habita
    `In Progress → Review → Ready for QA → QA → User Validation → Done`.
-   Pular = `[FACILITADOR — prompt tax]`.
+   Pular = `[FACILITADOR — prompt tax]`. **REGRA DE OURO:** 1 avanço de
+   coluna adjacente por card por write+publish; publish **antes** de
+   codar; Dev fecha só IP→Review no turno; gates Spot/QA ≤1 raia/card/turno;
+   teleporte (várias raias no mesmo update) = prompt tax.
 9e. **Desinstalação (§0.05):** `FORGE, desinstale` / `uninstall` remove
    `/forge/`, rules/skills FORGE do Cursor, estado `.btg-mcp-*` e chaves
    `btg-*` do `mcp.json` no escopo pedido — **sem** apagar código de
@@ -2478,6 +2587,16 @@ concluir se atende padrão premium **com honestidade**) → QA.
    - **Web:** Playwright (padrão) · Playwright MCP (`browser_snapshot` = E2,
      `browser_take_screenshot` = E3, `--vision` só para canvas) · Puppeteer se o
      projeto já usa. Anexar erros de console e requisições 4xx/5xx.
+     **Connected Runtime Gate:** UI com API exige ao menos um run autenticado
+     na stack real, sem `route.fulfill`/mock/HAR nos endpoints críticos,
+     validando `2xx` + schema mínimo e falhando em `4xx/5xx`, console error ou
+     `pageerror`. Preferir `storageState` de sessão válida; CDP no navegador do
+     DONO só se disponível e autorizado. Mock prova apenas UI e nunca fecha
+     QA/User Validation/Done. Mudança de rota/proxy/serviço exige
+     restart/rebuild do runtime antes do run; runtime antigo = Fail. Sem sessão
+     ou stack real, marcar `INCONCLUSIVO`/Blocked — proibido promover por mock.
+     Manifesto obrigatório: interceptações, auth, commit/dirty, URL/API,
+     PID/container/image/startup e `network.json`/console/pageerror/E2/E3/E4.
    - **Windows:** assumir o controle do app por **UI Automation** — pywinauto
      (`backend="uia"`) ou FlaUI; Appium/NovaWindows só com stack Appium;
      **WinAppDriver proibido para projeto novo** (sem manutenção desde 2020).
@@ -2546,16 +2665,18 @@ ranking-visual, capacidades, evidencias/<run-id>/manifest.json, laudos,
 ```markdown
 # FORGE Board
 ## Backlog | Ready | In Progress | Review | Ready for QA | QA | User Validation | Done
-- [ID-01] [Tipo] Titulo (@Agente)
+- [ID-01] [Tipo] p0 Titulo (@Agente)
 ```
 
-(Uma seção `##` por coluna canônica — **inclui Ready for QA**; uma linha por card; Tipo = Epic|Feature|PBI|Task|Bug|Spike.  
+(Uma seção `##` por coluna canônica — **inclui Ready for QA**; uma linha por card; Tipo = Epic|Feature|PBI|Task|Bug|Spike; `p0`|`p1`|`p2` = prioridade §0.02.  
 **Proibido** `In Progress → Done` sem passar Review → Ready for QA → QA → User Validation no Nível 2+.)
 
 ## Evocação
 
 `FORGE, …` · `/forge` · papel nomeado · referência a este doc · pedido de
 orquestração completa. Fora disso, assistente normal.
+Pedido de **trabalho** sob evocação → card no Kanban (§0.02) com prioridade
+`0|1|2` (default `0`). Os meta-comandos abaixo **não** geram card.
 
 Comandos de modo (§0.03):
 - `FORGE, melhoria contínua` (aliases: `loop melhoria`, `continuous
@@ -2593,8 +2714,8 @@ Tags: `[DIRETOR — Sync FORGE]`,
 `[GUARDIÃO — Playable Gate]`, `[GUARDIÃO — roda normal]`,
 `[FACILITADOR — prompt tax]`, `[FACILITADOR — melhoria contínua]`,
 `[FACILITADOR — mission control]`,
-`[BÚSSOLA — dedup]`, `[BÚSSOLA — top-up]`, `[BÚSSOLA-α]`, `[BÚSSOLA-β]`,
-`[BÚSSOLA-γ]`,
+`[BÚSSOLA — dedup]`, `[BÚSSOLA — top-up]`, `[BÚSSOLA — pedido DONO]`,
+`[BÚSSOLA-α]`, `[BÚSSOLA-β]`, `[BÚSSOLA-γ]`,
 `[FORGE — paralelo]`, `[FORGE — Continuação da Sprint]`,
 `[DIRETOR — Circuit Breaker]`, `[DIRETOR — Circuit Breaker usabilidade]`,
 `[DIRETOR — Circuit Breaker jogabilidade]` (alias interativo),

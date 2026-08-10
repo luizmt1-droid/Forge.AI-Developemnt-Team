@@ -18,16 +18,15 @@ Status legend: **now** / **next** / **later** / **done**.
 
 ## Next
 
-- **Reference installation packs.** Ready-to-drop rule files for Cursor
-  (`.cursor/rules/`), Claude Code (`CLAUDE.md`) and GitHub Copilot custom
-  instructions, generated from section 5 of the spec so they cannot drift.
+- **Pack drift automation.** `packs/cursor|claude|copilot` are generated from
+  §5; add a small script/CI check so they cannot drift from `Forge.Team.MD`.
 - **Example runs.** Short, anonymized transcripts of Level 1 and Level 2
-  sessions that show Adaptive Mode sizing, hybrid assign/pull, a `sprint-N.md`
-  work-log update, the UX Gate and a closed bug loop. These are the fastest way
-  for a newcomer to understand what "done" looks like.
+  sessions that show Adaptive Mode sizing, Mission Control publish, gate-column
+  advances (REGRA DE OURO), the UX Gate and a closed bug loop with Connected
+  Runtime evidence.
 - **Capability Probe adapters.** Harden the evidence adapters in section 3.6
-  (Playwright / desktop / API) with concrete, copy-pasteable snippets that work
-  on a fresh machine.
+  (Playwright / desktop / API / Connected Runtime) with concrete, copy-pasteable
+  snippets that work on a fresh machine.
 
 ## Later
 
@@ -42,10 +41,16 @@ Status legend: **now** / **next** / **later** / **done**.
 
 ## Done
 
-- **Scrumban like a real team (spec + README).** FACILITADOR at every Adaptive
-  Mode level; hybrid assign + pull; `board.md` + `sprint-N.md` work logs (done /
-  time / impediment); **Blocked** column with FUNDAÇÃO as tech-lead unblocker;
-  DIRETOR briefs point the owner at the sprint diary.
+- **Autonomy, continuous loop, Mission Control, uninstall (spec + README).**
+  Anti–prompt-tax backlog pull (§0.02), controlled `CONTINUOUS`/`DRAINING`
+  modes (§0.03), Chat Surface + Live Kanban (§0.04), uninstall ritual (§0.05),
+  gate columns including Ready for QA, Connected Runtime Gate, QA squad
+  (GUARDIÃO / ÍRIS / PERITO), VIGIA.
+- **Reference installation packs.** `packs/cursor/` (spec, §5 rule, agents,
+  autopilot hook), `packs/claude/`, `packs/copilot/` generated from section 5.
+- **Scrumban like a real team (spec + README).** FACILITADOR governs pull + WIP
+  and Mission Control publish; `board.md` is the task SSOT; DIRETOR reports mode
+  + P0 in execution every turn.
 
 ## Out of scope (for now)
 
