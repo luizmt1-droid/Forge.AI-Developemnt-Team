@@ -5,7 +5,7 @@ Drop-in materialization of `Forge.Team.MD` for Cursor product repos.
 ## Install
 
 ```text
-packs/cursor/forge/Forge.Team.MD  →  <repo>/.cursor/forge/Forge.Team.MD
+packs/cursor/ssot/Forge.Team.MD  →  <repo>/.cursor/forge/Forge.Team.MD
 packs/cursor/rules/equipe-forge.mdc  →  <repo>/.cursor/rules/equipe-forge.mdc
 packs/cursor/agents/forge-*.md  →  <repo>/.cursor/agents/
 packs/cursor/hooks/forge-autopilot-stop.mjs  →  <repo>/.cursor/hooks/
